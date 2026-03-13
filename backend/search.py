@@ -3,13 +3,19 @@ from google import genai
 from google.genai import types
 from supabase import create_client
 from dotenv import load_dotenv
+from langchain_core.tools import tool
 
 load_dotenv()
 
 client_google = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
-def buscar_contexto(pregunta: str) -> str:
+@tool
+def search_theory(pregunta: str) -> str:
+    """
+    Busca teoria en los apuntes de la asignatura.
+    Usar cuando haya dudas teoricas o errores conceptuales.
+    """
     try:
         result = client_google.models.embed_content(
             model="gemini-embedding-001",
@@ -31,13 +37,13 @@ def buscar_contexto(pregunta: str) -> str:
         ).execute()
 
         if not respuesta.data:
-            return ""
+            return "No hay apuntes sobre esto."
 
         contexto = ""
         for match in respuesta.data:
             similitud = match['similarity'] * 100
-            # Metadatos para las citas del LLM
             contexto += f"[ORIGEN: {match['tema']} | SIMILITUD: {similitud:.1f}%]\n{match['contenido']}\n\n"
+            #asignatura = match['asignatura'] para cuando cambie la insercion de la BD
         
         return contexto
 

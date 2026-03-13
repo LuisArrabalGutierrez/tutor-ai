@@ -1,11 +1,14 @@
 from pydantic import BaseModel
+from typing import List
 
+# Definimos la estructura exacta de un mensaje (quién habla y qué dice)
+class MensajeChat(BaseModel):
+    role: str
+    content: str
 
-# Aquí definimos los modelos de datos que esperamos recibir en las peticiones POST
-# desde el front, es como las interfaces en typescript. 
-
+# Actualizamos la petición para recibir la lista de objetos en vez de textos sueltos
 class ChatRequest(BaseModel):
-    pregunta: str
+    mensajes: List[MensajeChat]
     codigo: str
 
 class ExecuteRequest(BaseModel):

@@ -6,5 +6,6 @@ router = APIRouter()
 
 @router.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    reply = get_socratic_response(request.pregunta, request.codigo)    
+    historial = [{"role": msg.role, "content": msg.content} for msg in request.mensajes]
+    reply = get_socratic_response(historial, request.codigo)
     return {"respuesta": reply}
