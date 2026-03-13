@@ -28,11 +28,21 @@ export default function App() {
   // Función para enviar mensajes a la IA
   const handleSendMessage = async (text: string) => {
     const newUserMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
-    setMessages((prev) => [...prev, newUserMsg]);
+    
+    // Lista actualizada con el nuevo mensaje del usuario
+    const chatActualizado = [...messages, newUserMsg];
+    
+    setMessages(chatActualizado);
     setIsAiTyping(true);
 
     try {
-      const reply = await sendMessageToBackend(text, code);
+      // Limpiamos la lista para enviar solo rol y contenido al backend
+      const historialLimpio = chatActualizado
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => ({ role: m.role, content: m.content }));
+
+      const reply = await sendMessageToBackend(historialLimpio, code);
+      
       const newAiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: reply, timestamp: Date.now() };
       setMessages((prev) => [...prev, newAiMsg]);
     } catch (error) {
@@ -41,7 +51,7 @@ export default function App() {
       setIsAiTyping(false);
     }
   };
-
+  
   // Función para el botón verde (Compilar)
   const handleRunCode = async () => {
     setIsCompiling(true);

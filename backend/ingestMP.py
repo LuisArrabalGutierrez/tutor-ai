@@ -56,7 +56,9 @@ def ingest_slides(file_path: str, tema_principal: str):
             supabase.table("apuntes").insert({
                 "tema": f"{tema_principal} - Pag {num_pag + 1}",
                 "contenido": contexto_enriquecido,
-                "embedding": embedding
+                "embedding": embedding,
+                #"asignatura": "MP" para cuando cambie la insercion de la BD
+
             }).execute()
             
             print(f" Subida diapositiva {num_pag + 1}...")

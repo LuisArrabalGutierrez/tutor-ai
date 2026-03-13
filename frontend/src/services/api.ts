@@ -1,15 +1,18 @@
 const API_URL = import.meta.env.VITE_API_URL
 
-export const sendMessageToBackend = async (message: string, code: string): Promise<string> => {
+export const sendMessageToBackend = async (
+  messages: {role: string, content: string}[], 
+  code: string
+): Promise<string> => {
   try {
     const response = await fetch(`${API_URL}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      // TRADUCCIÓN: Convertimos las variables de React a las que espera FastAPI
+      // Enviamos la lista completa
       body: JSON.stringify({ 
-        pregunta: message, 
+        mensajes: messages, 
         codigo: code 
       }), 
     });
@@ -19,7 +22,6 @@ export const sendMessageToBackend = async (message: string, code: string): Promi
     }
 
     const data = await response.json();
-    // TRADUCCIÓN: Leemos "respuesta" que es lo que devuelve el backend en Python
     return data.respuesta; 
     
   } catch (error) {
@@ -41,7 +43,6 @@ export const executeCodeBackend = async (code: string): Promise<{output: string,
   
       if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
   
-      // El backend nos devuelve exactamente {"output": "...", "isError": true/false}
       const data = await response.json();
       return data;
       
