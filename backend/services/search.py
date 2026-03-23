@@ -25,9 +25,9 @@ def search_theory(pregunta: str) -> str:
                 output_dimensionality=768
             )
         )
-        vector_pregunta = result.embeddings[0].values
+        vector_pregunta = result.embeddings[0].values  # convertir la pregunta a un vector embebido
 
-        respuesta = supabase.rpc(
+        respuesta = supabase.rpc( 
             'match_apuntes',
             {
                 'query_embedding': vector_pregunta, 
@@ -42,8 +42,11 @@ def search_theory(pregunta: str) -> str:
         contexto = ""
         for match in respuesta.data:
             similitud = match['similarity'] * 100
-            contexto += f"[ORIGEN: {match['tema']} | SIMILITUD: {similitud:.1f}%]\n{match['contenido']}\n\n"
-            #asignatura = match['asignatura'] para cuando cambie la insercion de la BD
+            asignatura = match.get('asignatura', 'Desconocida')
+            diapositiva = match.get('diapositiva', 0)
+            
+            # Ahora le pasamos la asignatura y la diapositiva en el encabezado
+            contexto += f"[ASIGNATURA: {asignatura} | ORIGEN: {match['tema']} | DIAPOSITIVA: {diapositiva} | SIMILITUD: {similitud:.1f}%]\n{match['contenido']}\n\n"
         
         return contexto
 
