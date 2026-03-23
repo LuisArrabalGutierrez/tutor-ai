@@ -122,6 +122,7 @@ export default function App() {
           messages={messages} 
           onSendMessage={handleSendMessage} 
           isLoading={isAiTyping} 
+          onClearChat={() => setMessages([])}
         />
       </div>
 

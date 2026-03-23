@@ -50,6 +50,8 @@ tutor.py: Se encarga exclusivamente de hablar con la IA (Groq y Langchain), impo
 
 #15.-Instalamos fastapi para crear un servidor web para que el front se comunique con el back   
 
+#16.-Integrado react-markdown y react-syntax-highlighter para que formatee automáticamente la negrita, las listas y, sobre todo, para que el código C++ aparezca con los colores de Visual Studio Code
+
 #16.- resumen por ahora del flujo a pedir algo a la IA:
 
         React (api.ts) ➡️ main.py ➡️ routers/chat.py ➡️ tutor.py ➡️ search.py ➡️ Supabase ➡️ search.py ➡️ tutor.py ➡️ Groq (LLaMA) ➡️ tutor.py ➡️ routers/chat.py ➡️ React.

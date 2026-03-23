@@ -1,17 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Message } from '../../types/index.ts';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface ChatPanelProps {
   messages: Message[];
   onSendMessage: (text: string) => void;
+  onClearChat: () => void; 
   isLoading: boolean;
 }
 
-export default function ChatPanel({ messages, onSendMessage, isLoading }: ChatPanelProps) {
+export default function ChatPanel({ messages, onSendMessage, onClearChat, isLoading }: ChatPanelProps) {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll hacia abajo cuando hay un nuevo mensaje
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -30,11 +33,24 @@ export default function ChatPanel({ messages, onSendMessage, isLoading }: ChatPa
 
   return (
     <div className="flex flex-col h-full bg-gray-950 w-full">
-      {/* Header del Chat */}
-      <div className="p-4 bg-gray-800 border-b border-gray-700">
+      {/* Header del Chat con botón de Limpiar */}
+      <div className="p-4 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
         <h2 className="text-sm font-semibold text-blue-400 flex items-center gap-2">
           Tutor IA
         </h2>
+        <button
+          onClick={onClearChat}
+          disabled={isLoading || messages.length === 0}
+          className="text-gray-400 hover:text-red-400 disabled:opacity-50 transition-colors text-xs flex items-center gap-1"
+          title="Limpiar conversación"
+        >
+          {/* Icono de papelera (SVG) */}
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Limpiar
+        </button>
       </div>
       
       {/* Historial de Mensajes */}
@@ -48,11 +64,40 @@ export default function ChatPanel({ messages, onSendMessage, isLoading }: ChatPa
                 : 'bg-gray-800 text-gray-200 self-start rounded-tl-none border border-gray-700'
             }`}
           >
-            <p className="text-sm leading-relaxed">{msg.content}</p>
+            <div className="text-sm leading-relaxed prose prose-invert max-w-none">
+              <ReactMarkdown
+                components={{
+                  code({  inline, className, children, ...props }: any) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    return !inline && match ? (
+                      <div className="mt-2 mb-2 rounded-md overflow-hidden border border-gray-700">
+                        <SyntaxHighlighter
+                          style={vscDarkPlus as any}
+                          language={match[1]}
+                          PreTag="div"
+                          customStyle={{ margin: 0, padding: '1rem', fontSize: '0.85rem' }}
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      </div>
+                    ) : (
+                      <code 
+                        className="bg-black/30 text-pink-300 px-1.5 py-0.5 rounded font-mono text-xs" 
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
+                {msg.content}
+              </ReactMarkdown>
+            </div>
           </div>
         ))}
         
-        {/* Indicador de "Escribiendo..." */}
         {isLoading && (
           <div className="bg-gray-800 p-3 rounded-lg self-start rounded-tl-none border border-gray-700 flex gap-1 items-center">
             <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
