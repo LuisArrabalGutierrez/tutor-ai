@@ -1,5 +1,6 @@
 # Tutor con IA - TFG
 
+Esto es un resúmen de los primeros pasos que se han hecho para la aplicacion, tecnologías, como se instalan,etc
 
 #1.- npm create vite@latest -> React -> TypeScript
 
