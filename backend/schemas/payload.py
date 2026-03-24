@@ -1,15 +1,18 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 
-# Definimos la estructura exacta de un mensaje (quién habla y qué dice)
+# Clase para representar cada mensaje del chat, con su rol (user, assistant, system) y su contenido
 class MensajeChat(BaseModel):
     role: str
     content: str
 
-# Actualizamos la petición para recibir la lista de objetos en vez de textos sueltos
+# Clase para representar la petición de chat, que incluye una lista de mensajes y un diccionario de archivos (nombre -> contenido)
 class ChatRequest(BaseModel):
     mensajes: List[MensajeChat]
-    codigo: str
+   
+    archivos: Dict[str, str] 
 
+
+# Clase para representar la petición de ejecución, que solo incluye el diccionario de archivos (nombre -> contenido)
 class ExecuteRequest(BaseModel):
-    code: str
+    archivos: Dict[str, str]

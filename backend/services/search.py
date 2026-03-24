@@ -3,20 +3,15 @@ from google import genai
 from google.genai import types
 from supabase import create_client
 from dotenv import load_dotenv
-from langchain_core.tools import tool
 
 load_dotenv()
 
 client_google = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
-@tool
-def search_theory(pregunta: str) -> str:
-    """
-    Busca teoria en los apuntes de la asignatura.
-    Usar cuando haya dudas teoricas o errores conceptuales.
-    """
+def search_theory_logic(pregunta: str) -> str:
     try:
+        # Obtiene vector
         result = client_google.models.embed_content(
             model="gemini-embedding-001",
             contents=pregunta,
@@ -25,8 +20,9 @@ def search_theory(pregunta: str) -> str:
                 output_dimensionality=768
             )
         )
-        vector_pregunta = result.embeddings[0].values  # convertir la pregunta a un vector embebido
+        vector_pregunta = result.embeddings[0].values
 
+        # Busca en bd
         respuesta = supabase.rpc( 
             'match_apuntes',
             {
@@ -39,17 +35,22 @@ def search_theory(pregunta: str) -> str:
         if not respuesta.data:
             return "No hay apuntes sobre esto."
 
-        contexto = ""
+        # Extrae el mejor resultado
+        mejor_match = respuesta.data[0]
+        similitud_mejor = mejor_match['similarity'] * 100
+        asignatura_mejor = mejor_match.get('asignatura', 'Desconocida')
+        diap_mejor = mejor_match.get('diapositiva', 0)
+        
+        # Formatea recomendacion sin etiquetas
+        contexto = f"Te recomiendo encarecidamente revisar la diapositiva {diap_mejor} del PDF **{mejor_match['tema']}** de la asignatura {asignatura_mejor} (Similitud: {similitud_mejor:.1f}%).\n\n"
+        
+        contexto += "CONTENIDO DE LOS APUNTES:\n"
+        
         for match in respuesta.data:
-            similitud = match['similarity'] * 100
-            asignatura = match.get('asignatura', 'Desconocida')
-            diapositiva = match.get('diapositiva', 0)
-            
-            # Ahora le pasamos la asignatura y la diapositiva en el encabezado
-            contexto += f"[ASIGNATURA: {asignatura} | ORIGEN: {match['tema']} | DIAPOSITIVA: {diapositiva} | SIMILITUD: {similitud:.1f}%]\n{match['contenido']}\n\n"
+            contexto += f"- [{match.get('asignatura', 'N/A')}] {match['contenido']}\n\n"
         
         return contexto
 
     except Exception as e:
-        print(f"Error BD: {e}")
+        print(f"Error: {e}")
         return ""

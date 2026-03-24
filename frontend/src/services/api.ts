@@ -2,7 +2,7 @@ const API_URL = import.meta.env.VITE_API_URL
 
 export const sendMessageToBackend = async (
   messages: {role: string, content: string}[], 
-  code: string
+  projectFiles: Record<string, string> 
 ): Promise<string> => {
   try {
     const response = await fetch(`${API_URL}/api/chat`, {
@@ -10,10 +10,9 @@ export const sendMessageToBackend = async (
       headers: {
         'Content-Type': 'application/json',
       },
-      // Enviamos la lista completa
       body: JSON.stringify({ 
         mensajes: messages, 
-        codigo: code 
+        archivos: projectFiles 
       }), 
     });
 
@@ -30,7 +29,7 @@ export const sendMessageToBackend = async (
   }
 };
 
-export const executeCodeBackend = async (code: string): Promise<{output: string, isError: boolean}> => {
+export const executeCodeBackend = async (projectFiles: Record<string, string>): Promise<{output: string, isError: boolean}> => {
     const API_URL = import.meta.env.VITE_API_URL;
     const endpoint = `${API_URL}/api/execute`;
     
@@ -38,7 +37,7 @@ export const executeCodeBackend = async (code: string): Promise<{output: string,
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }), 
+        body: JSON.stringify({ archivos: projectFiles }), 
       });
   
       if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
