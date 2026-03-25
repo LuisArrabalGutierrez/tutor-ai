@@ -57,6 +57,8 @@ tutor.py: Se encarga exclusivamente de hablar con la IA (Groq y Langchain), impo
 
     17.1.- Duckduck go por que: Es 100% Gratis y no requiere "API Keys", Anti-Scraping, por ejemplo en google puede detectar que eres un bot y bloquear la ip,mas simple de integrar y para busquedas de programacion es muy bueno porque da ejemplos de stackoverflow,github,etc
 
+#18.- instalar npm install jszip para poder empaquetar el codigo para descargarlo el alumno
+
 #16.- resumen por ahora del flujo a pedir algo a la IA:
 
         React (api.ts) ➡️ main.py ➡️ routers/chat.py ➡️ tutor.py ➡️ search.py ➡️ Supabase ➡️ search.py ➡️ tutor.py ➡️ Groq (LLaMA) ➡️ tutor.py ➡️ routers/chat.py ➡️ React.
