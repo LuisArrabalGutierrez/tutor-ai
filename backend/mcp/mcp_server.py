@@ -29,7 +29,7 @@ def compilar_cpp() -> str:
 
 @mcp.tool()
 def buscar_apuntes_ugr(pregunta: str) -> str:
-    """Busca apuntes. Usar siempre para teoria o conceptos."""
+    """Busca en los apuntes oficiales. OBLIGATORIO usar esta herramienta si el alumno pregunta por 'temario', 'diapositivas', 'dónde está explicado', o conceptos teóricos."""
     return search_theory_logic(pregunta)
 
 @mcp.tool()

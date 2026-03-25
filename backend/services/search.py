@@ -53,4 +53,4 @@ def search_theory_logic(pregunta: str) -> str:
 
     except Exception as e:
         print(f"Error: {e}")
-        return ""
+        return f"Error interno al buscar en los apuntes: {e}"
