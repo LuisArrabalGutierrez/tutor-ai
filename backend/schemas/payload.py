@@ -1,18 +1,18 @@
 from pydantic import BaseModel
-from typing import List, Dict
+from typing import List, Dict, Optional
 
-# Clase para representar cada mensaje del chat, con su rol (user, assistant, system) y su contenido
+# Representa un mensaje individual del chat
 class MensajeChat(BaseModel):
-    role: str
+    role: str # 'user', 'assistant' o 'system'
     content: str
 
-# Clase para representar la petición de chat, que incluye una lista de mensajes y un diccionario de archivos (nombre -> contenido)
+# Petición principal del chat
 class ChatRequest(BaseModel):
-    mensajes: List[MensajeChat]
-   
-    archivos: Dict[str, str] 
+    historial: List[MensajeChat] # Lista de mensajes para mantener el contexto
+    archivos: Optional[Dict[str, str]] = {}
+    terminal_context: Optional[str] = "" 
+    asignatura: Optional[str] = "cpp" # 'cpp' o 'linux'
 
-
-# Clase para representar la petición de ejecución, que solo incluye el diccionario de archivos (nombre -> contenido)
+# Petición para ejecutar código (si no usas WebSockets)
 class ExecuteRequest(BaseModel):
     archivos: Dict[str, str]
