@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import chat, execute
+from routers import chat, execute, terminal
 
 app = FastAPI(title="Tutor IA Backend")
 
@@ -16,3 +16,4 @@ app.add_middleware(
 # Conectamos nuestras rutas limpias
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(execute.router, prefix="/api", tags=["Compiler"])
+app.include_router(terminal.router, tags=["Terminal"])

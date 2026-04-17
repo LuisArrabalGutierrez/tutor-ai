@@ -6,9 +6,13 @@ router = APIRouter()
 
 @router.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    historial = [{"role": msg.role, "content": msg.content} for msg in request.mensajes]
+    # Convertimos los objetos Pydantic a diccionarios simples para tutor.py
+    historial_dict = [m.model_dump() for m in request.historial]
     
-    # MUY IMPORTANTE: Añadir 'await' aquí
-    reply = await get_socratic_response_async(historial, request.archivos) 
-    
-    return {"respuesta": reply}
+    respuesta = await get_socratic_response_async(
+        historial=historial_dict,
+        proyecto_archivos=request.archivos,
+        terminal_context=request.terminal_context,
+        asignatura=request.asignatura
+    )
+    return {"reply": respuesta}

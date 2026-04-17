@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 from google import genai
 from google.genai import types
 from supabase import create_client
@@ -11,7 +12,7 @@ supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
 def search_theory_logic(pregunta: str) -> str:
     try:
-        # Obtiene vector
+        # 1. Obtener vector de la pregunta
         result = client_google.models.embed_content(
             model="gemini-embedding-001",
             contents=pregunta,
@@ -22,7 +23,7 @@ def search_theory_logic(pregunta: str) -> str:
         )
         vector_pregunta = result.embeddings[0].values
 
-        # Busca en bd
+        # 2. Buscar en Supabase
         respuesta = supabase.rpc( 
             'match_apuntes',
             {
@@ -35,22 +36,30 @@ def search_theory_logic(pregunta: str) -> str:
         if not respuesta.data:
             return "No hay apuntes sobre esto."
 
-        # Extrae el mejor resultado
         mejor_match = respuesta.data[0]
-        similitud_mejor = mejor_match['similarity'] * 100
-        asignatura_mejor = mejor_match.get('asignatura', 'Desconocida')
         diap_mejor = mejor_match.get('diapositiva', 0)
+        tema_mejor = mejor_match['tema']
         
-        # Formatea recomendacion sin etiquetas
-        contexto = f"Te recomiendo encarecidamente revisar la diapositiva {diap_mejor} del PDF **{mejor_match['tema']}** de la asignatura {asignatura_mejor} (Similitud: {similitud_mejor:.1f}%).\n\n"
+        # Limpieza para evitar el .pdf.pdf
+        tema_mejor_limpio = tema_mejor[:-4] if tema_mejor.lower().endswith('.pdf') else tema_mejor
+
+        # Encode para URL (maneja espacios y tildes correctamente)
+        nombre_archivo_url = urllib.parse.quote(f"{tema_mejor_limpio}.pdf")
         
-        contexto += "CONTENIDO DE LOS APUNTES:\n"
+        # URL FINAL: Directo al bucket 'apuntes' sin carpetas intermedias
+        BASE_URL_STORAGE = "https://osalgrcicglnpajcocyt.supabase.co/storage/v1/object/public/apuntes"
+        url_pdf = f"{BASE_URL_STORAGE}/{nombre_archivo_url}#page={diap_mejor}"
         
+        # INSTRUCCIÓN AGRESIVA: Obligamos a la IA a no saludar y pegar el link primero
+        contexto = "REGLA DE ORO: Empieza tu respuesta copiando EXACTAMENTE esta línea:\n"
+        contexto += f"[{tema_mejor_limpio}.pdf - Diapositiva {diap_mejor}]({url_pdf})\n\n"
+        
+        contexto += "CONTENIDO EXTRAÍDO (Úsalo para tu explicación socrática):\n"
         for match in respuesta.data:
-            contexto += f"- [{match.get('asignatura', 'N/A')}] {match['contenido']}\n\n"
+            contexto += f"- {match['contenido']}\n\n"
         
         return contexto
 
     except Exception as e:
-        print(f"Error: {e}")
-        return f"Error interno al buscar en los apuntes: {e}"
+        print(f"Error en búsqueda: {e}")
+        return f"Error: {e}"
