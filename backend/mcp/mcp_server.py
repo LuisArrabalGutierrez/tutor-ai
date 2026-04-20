@@ -2,9 +2,10 @@ import sys
 import os
 import json
 
-# Configura ruta
+# Aseguramos que Python encuentre la carpeta 'services'
 DIRECTORIO_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, DIRECTORIO_BACKEND)
+if DIRECTORIO_BACKEND not in sys.path:
+    sys.path.insert(0, DIRECTORIO_BACKEND)
 
 from mcp.server.fastmcp import FastMCP
 from services.search import search_theory_logic 
@@ -15,36 +16,44 @@ mcp = FastMCP("TutorIA_Workspace")
 
 @mcp.tool()
 def compilar_cpp() -> str:
-    """Compila y ejecuta el proyecto C++. No usar para teoria."""
+    """
+    Compila y ejecuta el proyecto C++ actual del alumno.
+    USO: Utiliza esto SOLO cuando el alumno te pida ejecutar su código o te pregunte por qué su programa da un error de compilación.
+    """
+    ruta_json = os.path.join(DIRECTORIO_BACKEND, "temp_project.json")
     try:
-        # Lee proyecto
-        ruta_json = os.path.join(DIRECTORIO_BACKEND, "temp_project.json")
         with open(ruta_json, "r", encoding="utf-8") as f:
             archivos_proyecto = json.load(f)
-            
         resultado = compile_and_run_project(archivos_proyecto)
         return resultado["output"]
     except Exception as e:
-        return f"Error: {e}"
+        return f"Error al compilar: {str(e)}"
 
 @mcp.tool()
 def buscar_apuntes_ugr(pregunta: str) -> str:
-    """Busca en los apuntes oficiales. OBLIGATORIO usar esta herramienta si el alumno pregunta por 'temario', 'diapositivas', 'dónde está explicado', o conceptos teóricos."""
+    """
+    Busca en la base de datos de apuntes oficiales de la UGR. 
+    USO: Obligatorio si el alumno pregunta por 'temario', 'teoría', 'dónde está explicado' o conceptos de la asignatura.
+    NO USAR para corregir errores de código puntuales.
+    """
     return search_theory_logic(pregunta)
 
 @mcp.tool()
 def buscar_internet(consulta: str) -> str:
-    """Busca en internet."""
+    """
+    Busca información en internet mediante DuckDuckGo.
+    USO: SOLO usar si la respuesta no se encuentra en los apuntes oficiales de la UGR.
+    """
     try:
         resultados = DDGS().text(consulta, max_results=3)
         if not resultados:
-            return "Sin resultados."
-        texto = "Resultados:\n"
+            return "Sin resultados en internet."
+        texto = "Resultados web:\n"
         for r in resultados:
-            texto += f"- {r['title']}: {r['body']}\n"
+            texto += f"- {r.get('title', '')}: {r.get('body', '')}\n"
         return texto
     except Exception as e:
-        return f"Error: {e}"
+        return f"Error de conexión: {str(e)}"
 
 def main():
     mcp.run(transport="stdio")
