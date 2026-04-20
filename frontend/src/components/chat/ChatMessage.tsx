@@ -14,7 +14,7 @@ export default function ChatMessage({ msg }: ChatMessageProps) {
       <div className="text-sm leading-relaxed prose prose-invert max-w-none">
         <ReactMarkdown
           components={{
-            // 1. CAPTURAMOS LOS ENLACES REALES (Markdown: [texto](url))
+            // CAPTURAMOS LOS ENLACES REALES (Markdown: [texto](url))
             a: ({ node, ...props }) => {
               return (
                 <a 
@@ -28,12 +28,12 @@ export default function ChatMessage({ msg }: ChatMessageProps) {
               );
             },
             
-            // 2. DEJAMOS LAS NEGRITAS COMO NEGRITAS NORMALES
+            // DEJAMOS LAS NEGRITAS COMO NEGRITAS NORMALES
             strong: ({ node, ...props }) => (
               <strong className="font-semibold text-white" {...props} />
             ),
 
-            // 3. MANTENEMOS TU CONFIGURACIÓN DE CÓDIGO (¡Está genial!)
+            // MANTENEMOS CONFIGURACIÓN DE CÓDIGO
             code({ inline, className, children, ...props }: any) {
               const match = /language-(\w+)/.exec(className || '');
               return !inline && match ? (

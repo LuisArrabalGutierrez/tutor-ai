@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Message } from '../types/index';
+import type { Message, Asignatura, ChatPayload } from '../types/index.ts';
 import { sendMessageToBackend } from '../services/api';
 
 export function useChat(projectFiles: Record<string, string>) {
@@ -8,29 +8,37 @@ export function useChat(projectFiles: Record<string, string>) {
   ]);
   const [isAiTyping, setIsAiTyping] = useState(false);
 
-  // 1. Añadimos 'asignatura' y 'terminalContext' como parámetros
-  const handleSendMessage = async (text: string, asignatura: 'cpp' | 'linux' = 'cpp', terminalContext: string = '') => {
-    const chat = [...messages, { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() } as Message];
-    setMessages(chat);
-    setIsAiTyping(true);
+  const handleSendMessage = async (text: string, asignatura: Asignatura, terminalContext: string) => {
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
+    const newHistory = [...messages, userMsg];
     
+    setMessages(newHistory);
+    setIsAiTyping(true);
+
     try {
-      // 2. Pasamos esos nuevos datos a la función de la API
-      const reply = await sendMessageToBackend(
-        chat.map(m => ({ role: m.role, content: m.content })), 
-        projectFiles,
+      const payload: ChatPayload = {
+        historial: newHistory.map(m => ({ role: m.role, content: m.content })),
+        archivos: projectFiles,
         asignatura,
-        terminalContext
-      );
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: reply, timestamp: Date.now() }]);
-    } catch {
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'system', content: '❌ Error de conexión con el Tutor IA.', timestamp: Date.now() }]);
+        terminal_context: terminalContext
+      };
+
+      const reply = await sendMessageToBackend(payload);
+      
+      const assistantMsg: Message = { id: Date.now().toString(), role: 'assistant', content: reply, timestamp: Date.now() };
+      setMessages(prev => [...prev, assistantMsg]);
+    } catch (error: any) {
+      const errorMsg: Message = { 
+        id: 'err-' + Date.now(), 
+        role: 'system', 
+        content: `❌ ${error.message || "Error de conexión."}`, 
+        timestamp: Date.now() 
+      };
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsAiTyping(false);
     }
   };
 
-  const clearChat = () => setMessages([]);
-
-  return { messages, isAiTyping, handleSendMessage, clearChat };
+  return { messages, isAiTyping, handleSendMessage, clearChat: () => setMessages([]) };
 }

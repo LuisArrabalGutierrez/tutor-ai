@@ -15,7 +15,10 @@ load_dotenv()
 # Inicia LLM
 llm = ChatGroq(
     api_key=os.getenv("GROQ_API_KEY"),
-    model_name="llama-3.3-70b-versatile" 
+    #model_name="llama-3.3-70b-versatile" 
+    #model_name="llama-3.1-8b-instant"
+    model_name="openai/gpt-oss-120b"
+
 )
 
 async def get_socratic_response_async(
@@ -49,14 +52,14 @@ async def get_socratic_response_async(
             if asignatura == "linux":
                 rol_sistema = "Eres un profesor estricto pero justo de 'Sistemas y Órdenes Unix' de la Universidad de Granada (UGR)."
                 reglas_especificas = """
-REGLAS ESTRICTAS (LINUX):
-0. CONVERSACION: Si el alumno solo saluda (ej. "hola") o hace una pregunta genérica, responde de forma conversacional SIN usar ninguna herramienta.
-1. BÚSQUEDA OBLIGATORIA: Si el alumno pregunta por teoría o diapositivas, usa 'buscar_apuntes_ugr'.
-2. PROHIBIDO PARAFRASEAR ENLACES: Si usas la herramienta, te devolverá un enlace Markdown. TU PRIMER CARÁCTER EN LA RESPUESTA DEBE SER EL CORCHETE '[' DE ESE ENLACE. Pega el enlace literal y luego da tu explicación.
-3. ENFOQUE BASH: Enseña bash, permisos de archivos, tuberías y administración de Linux.
-4. MÉTODO SOCRÁTICO: No des el comando exacto al primer intento. Guíale.
-5. CONTEXTO VISUAL: Usa lo que ve el alumno en consola para corregirle.
-6. CIERRE: Termina siempre con una pregunta que guíe su próximo paso."""
+                        REGLAS ESTRICTAS (LINUX):
+                        0. CONVERSACION: Si el alumno solo saluda (ej. "hola") o hace una pregunta genérica, responde de forma conversacional SIN usar ninguna herramienta.
+                        1. BÚSQUEDA OBLIGATORIA: Si el alumno pregunta por teoría o diapositivas, usa 'buscar_apuntes_ugr'.
+                        2. PROHIBIDO PARAFRASEAR ENLACES: Si usas la herramienta, te devolverá un enlace Markdown. TU PRIMER CARÁCTER EN LA RESPUESTA DEBE SER EL CORCHETE '[' DE ESE ENLACE. Pega el enlace literal y luego da tu explicación.
+                        3. ENFOQUE BASH: Enseña bash, permisos de archivos, tuberías y administración de Linux.
+                        4. MÉTODO SOCRÁTICO: No des el comando exacto al primer intento. Guíale.
+                        5. CONTEXTO VISUAL: Usa lo que ve el alumno en consola para corregirle.
+                        6. CIERRE: Termina siempre con una pregunta que guíe su próximo paso."""
 
                 # Prepara contexto de terminal
                 if terminal_context.strip():
@@ -67,14 +70,14 @@ REGLAS ESTRICTAS (LINUX):
             else:
                 rol_sistema = "Eres un tutor socrático de 'Metodología de la Programación' en C/C++ de la Universidad de Granada (UGR)."
                 reglas_especificas = """
-REGLAS ESTRICTAS (C++):
-0. CONVERSACION: Si el alumno solo saluda (ej. "hola") o hace una pregunta genérica, responde de forma conversacional SIN usar ninguna herramienta.
-1. BÚSQUEDA OBLIGATORIA: Si el alumno pregunta "dónde está", "temario", o teoría, usa 'buscar_apuntes_ugr'. 
-2. CITAS CLICABLES: La herramienta te dará un enlace Markdown. TU PRIMERA PALABRA DEBE SER ESE ENLACE. Pega el enlace [texto](url) y luego da tu explicación.
-3. ANTI-BUCLE: Responde a la ÚLTIMA pregunta del alumno.
-4. EXPLICACIÓN: Usa SOLO el texto proporcionado por la herramienta.
-5. COMPILADOR: Usa 'compilar_cpp' SOLO si hay errores de código.
-6. CIERRE: Termina siempre con una pregunta socrática."""
+                        REGLAS ESTRICTAS (C++):
+                        0. CONVERSACION: Si el alumno solo saluda (ej. "hola") o hace una pregunta genérica, responde de forma conversacional SIN usar ninguna herramienta.
+                        1. BÚSQUEDA OBLIGATORIA: Si el alumno pregunta "dónde está", "temario", o teoría, usa 'buscar_apuntes_ugr'. 
+                        2. CITAS CLICABLES: La herramienta te dará un enlace Markdown. TU PRIMERA PALABRA DEBE SER ESE ENLACE. Pega el enlace [texto](url) y luego da tu explicación.
+                        3. ANTI-BUCLE: Responde a la ÚLTIMA pregunta del alumno.
+                        4. EXPLICACIÓN: Usa SOLO el texto proporcionado por la herramienta.
+                        5. COMPILADOR: Usa 'compilar_cpp' SOLO si hay errores de código.
+                        6. CIERRE: Termina siempre con una pregunta socrática."""
                 texto_terminal = "" 
 
             # Construye historial
@@ -95,18 +98,18 @@ REGLAS ESTRICTAS (C++):
                 
             # Prompt maestro
             estado_actual = f"""=== ARCHIVOS DEL PROYECTO ACTUAL === 
-{archivos_json} 
-{texto_terminal}  
+                {archivos_json} 
+                {texto_terminal}  
 
-=== REGLAS RECORDATORIO === 
-{reglas_especificas} 
+                === REGLAS RECORDATORIO === 
+                {reglas_especificas} 
 
-=== PREGUNTA DEL ALUMNO ===
-{historial[-1]['content']}
+                === PREGUNTA DEL ALUMNO ===
+                {historial[-1]['content']}
 
-[RECORDATORIO CRÍTICO]: 
-- Si el alumno solo dice "hola" o saluda, responde normalmente SIN USAR HERRAMIENTAS.
-- Si has buscado apuntes, tu respuesta DEBE EMPEZAR obligatoriamente con el enlace en formato [Texto](URL). No introduzcas texto antes."""
+                [RECORDATORIO CRÍTICO]: 
+                - Si el alumno solo dice "hola" o saluda, responde normalmente SIN USAR HERRAMIENTAS.
+                - Si has buscado apuntes, tu respuesta DEBE EMPEZAR obligatoriamente con el enlace en formato [Texto](URL). No introduzcas texto antes."""
 
             mensajes.append(HumanMessage(content=estado_actual))
 

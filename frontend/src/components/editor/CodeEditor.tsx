@@ -1,6 +1,10 @@
 import Editor from '@monaco-editor/react';
-import type { CodeEditorProps } from '../../types/index.ts';
 
+interface CodeEditorProps {
+  code: string;
+  onChange: (value: string | undefined) => void;
+  language?: string;
+}
 export default function CodeEditor({ code, onChange, language = 'cpp' }: CodeEditorProps) {
   return (
     <div className="flex-grow h-full w-full">

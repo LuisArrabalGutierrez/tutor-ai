@@ -1,62 +1,57 @@
+import type { ChatPayload, ExecuteResponse } from '../types/index.ts';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export const sendMessageToBackend = async (
-  messages: {role: string, content: string}[], 
-  projectFiles: Record<string, string>,
-  asignatura: 'cpp' | 'linux' = 'cpp', // Nuevo parámetro
-  terminalContext: string = ''         // Nuevo parámetro
-): Promise<string> => {
+// Tiempos de espera configurables
+const CHAT_TIMEOUT = 45000; // 45 segundos para la IA
+const EXECUTE_TIMEOUT = 15000; // 15 segundos para compilar
+
+export const sendMessageToBackend = async (payload: ChatPayload): Promise<string> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CHAT_TIMEOUT);
+
   try {
     const response = await fetch(`${API_URL}/api/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // Hacemos que coincida EXACTAMENTE con el BaseModel de FastAPI
-      body: JSON.stringify({ 
-        historial: messages,       // Cambiado de 'mensajes' a 'historial'
-        archivos: projectFiles, 
-        asignatura: asignatura,
-        terminal_context: terminalContext
-      }), 
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
 
-    if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
     const data = await response.json();
-    // Aceptamos data.reply (como lo configuramos hoy) o data.respuesta (tu formato antiguo) por seguridad
-    return data.reply || data.respuesta; 
+    return data.reply || data.respuesta;
     
-  } catch (error) {
-    console.error("Error conectando con el backend:", error);
-    throw new Error("No se pudo conectar con la IA. ¿Está encendido el servidor Python?");
+  } catch (error: any) {
+    if (error.name === 'AbortError') throw new Error("La IA tardó demasiado en responder.");
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
 
-export const executeCodeBackend = async (
-  projectFiles: Record<string, string>
-): Promise<{output: string, isError: boolean}> => {
-    const endpoint = `${API_URL}/api/execute`;
+export const executeCodeBackend = async (archivos: Record<string, string>): Promise<ExecuteResponse> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), EXECUTE_TIMEOUT);
+
+  try {
+    const response = await fetch(`${API_URL}/api/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archivos }),
+      signal: controller.signal
+    });
+
+    if (!response.ok) throw new Error("Error en la compilación remota.");
+    return await response.json();
     
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ archivos: projectFiles }), 
-      });
-  
-      if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-  
-      const data = await response.json();
-      return data;
-      
-    } catch (error) {
-      console.error("Error al ejecutar código:", error);
-      return { 
-        output: "❌ Error de red: No se pudo conectar con el servidor para compilar. ¿Está el backend encendido?", 
-        isError: true 
-      };
-    }
+  } catch (error: any) {
+    return { 
+      output: error.name === 'AbortError' ? "❌ Tiempo de espera agotado (Timeout)." : "❌ Error de conexión con el compilador.", 
+      isError: true 
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };
