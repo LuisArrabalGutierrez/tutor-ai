@@ -1,6 +1,16 @@
 fastapi
-uvicorn
+uvicorn[standard]
 pydantic
 python-dotenv
 langchain
+langchain-core
 langchain-groq
+langchain-mcp-adapters
+mcp
+supabase
+google-genai
+numpy
+slowapi
+pytest
+httpx
+EOF
