@@ -13,6 +13,8 @@ import { useTerminal } from './hooks/useTerminal';
 import LinuxTerminal from './components/editor/LinuxTerminal';
 import type { Asignatura } from './types';
 
+{/* Componente principal de la aplicación, que maneja la estructura general de la interfaz, el estado de la asignatura seleccionada,
+   la visibilidad del chat, y coordina los diferentes componentes y hooks para el editor de código, el chat y el terminal */ } 
 export default function App() {
 
   {/* Estado para controlar la visibilidad del chat, la asignatura seleccionada y el contexto del terminal */}

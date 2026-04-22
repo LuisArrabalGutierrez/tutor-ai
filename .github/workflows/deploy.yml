@@ -32,7 +32,6 @@ jobs:
             # Reiniciamos ngrok para asegurar el túnel (usando tu dominio fijo)
             pm2 restart ngrok || pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name ngrok
             
-            # 4. Guardar el estado para que sobreviva a reinicios de la VM
             pm2 save
             
             exit 0
