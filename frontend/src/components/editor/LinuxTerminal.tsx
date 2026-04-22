@@ -3,8 +3,12 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 
-const GOOGLE_TERMINAL_URL = import.meta.env.VITE_GOOGLE_TERMINAL_URL || 'localhost';
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
+// Usamos la variable de entorno. Si no existe, por defecto localhost.
+const GOOGLE_IP = import.meta.env.VITE_GOOGLE_IP || 'localhost';
+
+const TERMINAL_HOST = isLocal ? 'localhost' : GOOGLE_IP;
 interface LinuxTerminalProps {
   onTerminalOutputChange?: (output: string) => void;
 }
@@ -37,7 +41,7 @@ export default function LinuxTerminal({ onTerminalOutputChange }: LinuxTerminalP
     termRef.current = term;
 
     // Conexión WebSocket
-    const ws = new WebSocket(`ws://${GOOGLE_TERMINAL_URL}:8000/ws/terminal`);
+    const ws = new WebSocket(`ws://${TERMINAL_HOST}:8000/ws/terminal`);
     wsRef.current = ws;
 
     ws.onopen = () => {

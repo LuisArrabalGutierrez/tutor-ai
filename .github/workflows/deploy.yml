@@ -1,0 +1,24 @@
+name: Deploy Backend
+on:
+  push:
+    branches: [ main ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: luisarrabalgutierrez
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/tutor-ai
+            git pull origin main
+            cd backend
+            # Solo crea el venv si no existe
+            [ -d venv ] || python3 -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
+            pkill -f uvicorn || true
+            nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
