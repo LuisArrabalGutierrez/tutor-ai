@@ -44,7 +44,7 @@ def compile_and_run_project(archivos: dict) -> dict:
             "--cpus", "0.5",           
             "-v", f"{temp_dir}:/app",  
             "-w", "/app",              
-            "gcc:latest",              
+            "tutor-ugr-image:latest",              
             "bash", "-c", script_interno
         ]
 
@@ -53,7 +53,7 @@ def compile_and_run_project(archivos: dict) -> dict:
                 docker_cmd, 
                 capture_output=True, 
                 text=True, 
-                timeout=5 
+                timeout=20
             )
             
             log_compilacion = ""
