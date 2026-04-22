@@ -20,8 +20,13 @@ jobs:
             source venv/bin/activate
             pip install -r requirements.txt
             fuser -k 8000/tcp || true
-            sleep 1
+            pkill -f ngrok || true
+            sleep 2
+            
+            # Lanzar el backend
             nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
-            # Verificamos si ngrok está corriendo, si no, lo lanzamos
-            pgrep -f ngrok || nohup ngrok http 8000 > ~/ngrok.log 2>&1 &
+            
+            # Lanzar ngrok (Asegúrate de haber puesto el authtoken antes en la consola de Google)
+            nohup ngrok http 8000 > ~/ngrok.log 2>&1 &
+            
             disown
