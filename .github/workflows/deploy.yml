@@ -19,14 +19,18 @@ jobs:
             cd backend
             source venv/bin/activate
             pip install -r requirements.txt
+            
+            # Matar procesos de forma segura
             fuser -k 8000/tcp || true
             pkill -f ngrok || true
             sleep 2
-            
-            # Lanzar el backend
+
+            # Lanzar Uvicorn
             nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
             
-            # Lanzar ngrok (Asegúrate de haber puesto el authtoken antes en la consola de Google)
+            # Lanzar Ngrok (asumiendo que el authtoken ya está configurado en la VM)
             nohup ngrok http 8000 > ~/ngrok.log 2>&1 &
             
-            disown
+            # Dar tiempo a los procesos y salir con éxito forzado
+            sleep 5
+            exit 0
