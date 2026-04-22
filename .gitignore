@@ -15,6 +15,7 @@ yarn-error.log*
 dist/
 build/
 out/
+venv/
 
 # IDE settings
 .vscode/
