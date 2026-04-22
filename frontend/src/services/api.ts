@@ -1,6 +1,6 @@
 import type { ChatPayload, ExecuteResponse } from '../types/index.ts';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 // Tiempos de espera configurables
 const CHAT_TIMEOUT = 45000; // 45 segundos para la IA
