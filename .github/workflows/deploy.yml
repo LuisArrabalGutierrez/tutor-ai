@@ -31,6 +31,6 @@ jobs:
             # Lanzar Ngrok (asumiendo que el authtoken ya está configurado en la VM)
             nohup ngrok http 8000 > ~/ngrok.log 2>&1 &
             
-            # Dar tiempo a los procesos y salir con éxito forzado
-            sleep 5
+            disown
+            sleep 2
             exit 0
