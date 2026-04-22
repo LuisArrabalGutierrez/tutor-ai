@@ -41,7 +41,7 @@ export default function LinuxTerminal({ onTerminalOutputChange }: LinuxTerminalP
     termRef.current = term;
 
     // Conexión WebSocket
-    const ws = new WebSocket(`ws://${TERMINAL_HOST}:8000/ws/terminal`);
+    const ws = new WebSocket(`wss://${TERMINAL_HOST}/ws/terminal`);
     wsRef.current = ws;
 
     ws.onopen = () => {
