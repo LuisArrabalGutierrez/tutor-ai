@@ -14,11 +14,17 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/tutor-ai
+            # Forzar la limpieza antes de tirar del código nuevo
+            git reset --hard origin/main
             git pull origin main
             cd backend
-            # Solo crea el venv si no existe
-            [ -d venv ] || python3 -m venv venv
+            # Crear venv solo si no existe e instalar dependencias
+            python3 -m venv venv
             source venv/bin/activate
+            pip install --upgrade pip
             pip install -r requirements.txt
+            # Instalar la librería que faltaba antes por si acaso
+            pip install duckduckgo-search
+            # Reiniciar uvicorn
             pkill -f uvicorn || true
-            nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
+            nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
