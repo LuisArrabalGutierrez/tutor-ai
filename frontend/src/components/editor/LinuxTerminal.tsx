@@ -4,11 +4,13 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+const GOOGLE_IP = import.meta.env.VITE_GOOGLE_IP;
 
-// Usamos la variable de entorno. Si no existe, por defecto localhost.
-const GOOGLE_IP = import.meta.env.VITE_GOOGLE_TERMINAL_URL || 'localhost';
+// Si es local usa ws y puerto 8000. Si es ngrok usa wss sin puerto.
+const socketUrl = isLocal 
+  ? `ws://localhost:8000/ws/terminal` 
+  : `wss://${GOOGLE_IP}/ws/terminal`;
 
-const TERMINAL_HOST = isLocal ? 'localhost' : GOOGLE_IP;
 interface LinuxTerminalProps {
   onTerminalOutputChange?: (output: string) => void;
 }
@@ -41,7 +43,7 @@ export default function LinuxTerminal({ onTerminalOutputChange }: LinuxTerminalP
     termRef.current = term;
 
     // Conexión WebSocket
-    const ws = new WebSocket(`wss://${TERMINAL_HOST}/ws/terminal`);
+    const ws = new WebSocket(socketUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
