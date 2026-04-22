@@ -13,24 +13,26 @@ jobs:
           username: luisarrabalgutierrez
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # 1. Entrar en la carpeta y actualizar el código
             cd ~/tutor-ai
             git reset --hard origin/main
             git pull origin main
+            
+            # 2. Entrar al backend y actualizar librerías si hay nuevas
             cd backend
+            # Si no existe el venv, lo crea. Si existe, lo usa.
+            [ -d venv ] || python3 -m venv venv
             source venv/bin/activate
             pip install -r requirements.txt
             
-            # Matar procesos de forma segura
-            fuser -k 8000/tcp || true
-            pkill -f ngrok || true
-            sleep 2
-
-            # Lanzar Uvicorn
-            nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
+            # 3. Gestionar los procesos con PM2
+            # Reiniciamos el backend para que cargue el nuevo código
+            pm2 restart backend || pm2 start "python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
             
-            # Lanzar Ngrok (asumiendo que el authtoken ya está configurado en la VM)
-            nohup ngrok http 8000 > ~/ngrok.log 2>&1 &
+            # Reiniciamos ngrok para asegurar el túnel (usando tu dominio fijo)
+            pm2 restart ngrok || pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name ngrok
             
-            disown
-            sleep 2
+            # 4. Guardar el estado para que sobreviva a reinicios de la VM
+            pm2 save
+            
             exit 0
