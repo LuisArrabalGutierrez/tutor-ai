@@ -4,7 +4,7 @@ import time
 import numpy as np
 import PyPDF2
 import traceback
-from fastapi import APIRouter, UploadFile, File, Header
+from fastapi import APIRouter, UploadFile, File, Header, HTTPException
 from fastapi.responses import JSONResponse
 from google import genai
 from google.genai import types
@@ -30,12 +30,22 @@ async def upload_personal_pdf(
     x_session_id: str = Header(...)
 ):
     try:
+        # Validar el tamaño del archivo (Límite: 10 MB)
+        # Esto evita que un alumno suba un archivo de 2GB y colapse la RAM del servidor.
+        MAX_MB = 10
+        if file.size and file.size > (MAX_MB * 1024 * 1024):
+            print(f" [BLOQUEO] Intento de subida de PDF masivo rechazado. Sesión: {x_session_id}")
+            return JSONResponse(
+                status_code=413, 
+                content={"error": f"El archivo es demasiado grande. Tamaño máximo permitido: {MAX_MB}MB."}
+            )
+
         print(f" Recibiendo PDF '{file.filename}' para sesión: {x_session_id}")
         
         # Limpiamos la memoria antigua de este usuario
         memoria_usuarios[x_session_id] = []
         
-        # Leemos el PDF
+        # [SEGURIDAD] 2. Lectura controlada del archivo en RAM (solo si pasó el filtro de tamaño)
         pdf_bytes = await file.read()
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
         
@@ -71,7 +81,7 @@ async def upload_personal_pdf(
                 })
                 bloques_procesados += 1
                 
-                # Le damos un respiro de medio segundo a Google para evitar el Error 429
+                # Le damos un respiro de medio segundo a Google para evitar el Error 429 (Rate Limit)
                 time.sleep(0.5) 
                 
             except Exception as e_chunk:
@@ -84,4 +94,4 @@ async def upload_personal_pdf(
     except Exception as e:
         print("\n CRASH INTERNO EN EL SERVIDOR (Detalles abajo):")
         traceback.print_exc() # Esto imprimirá el error real en tu consola negra
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        return JSONResponse(status_code=500, content={"error": "Error interno del servidor al procesar el PDF."})

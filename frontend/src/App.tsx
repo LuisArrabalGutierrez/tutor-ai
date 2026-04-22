@@ -14,17 +14,28 @@ import LinuxTerminal from './components/editor/LinuxTerminal';
 import type { Asignatura } from './types';
 
 export default function App() {
+
+  {/* Estado para controlar la visibilidad del chat, la asignatura seleccionada y el contexto del terminal */}
   const [isChatOpen, setIsChatOpen] = useState(true);
+  {/* Estado para controlar la asignatura, que por defecto es C++ */}
   const [asignatura, setAsignatura] = useState<Asignatura>('cpp');
+
   const [terminalContext, setTerminalContext] = useState("");
 
+  {/* Hooks personalizados para manejar la lógica del proyecto, el chat y el terminal */}
   const { projectFiles, activeFile, setActiveFile, handleFolderUpload, handleDownloadZip, handleEditorChange, getLang } = useProject();
+
+  {/* Hooks para usar la logica de  la terminal y/o compilador usando los archivos subidos como parametro*/}
   const { terminalOutput, isCompiling, isTerminalError, handleRunCode, setTerminalMessage } = useTerminal(projectFiles);
+
+  {/* Hook para manejar la lógica del chat, pasando los archivos del proyecto para que el asistente pueda analizarlos y responder */}
   const { messages, isAiTyping, handleSendMessage, clearChat } = useChat(projectFiles);
 
   return (
     <div className="flex h-screen w-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
       <div className={`h-full flex flex-col border-r border-gray-700 transition-all duration-500 ${isChatOpen ? 'w-1/2' : 'w-full'}`}>
+
+        {/* El "header" donde estan los botones de subir archivo,etc */}
         <TopBar 
           asignaturaActual={asignatura}
           onCambiarAsignatura={setAsignatura}
@@ -36,6 +47,7 @@ export default function App() {
           toggleChat={() => setIsChatOpen(!isChatOpen)} 
         />
         
+        {/* El area principal, que se divide en dos partes: el sidebar con los archivos y el editor/terminal o la terminal de linux dependiendo de la asignatura */}
         <div className="flex-1 overflow-hidden flex flex-col">
           {asignatura === 'cpp' ? (
             <div className="flex flex-col h-full">
@@ -61,6 +73,8 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {/* El panel de chat, que se muestra u oculta dependiendo del estado isChatOpen con esto: ${isChatOpen ? 'w-1/2' : 'w-0 overflow-hidden'} */}
 
       <div className={`h-full bg-gray-950 transition-all duration-500 flex-shrink-0 ${isChatOpen ? 'w-1/2' : 'w-0 overflow-hidden'}`}>
           <ChatPanel 

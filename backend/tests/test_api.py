@@ -13,32 +13,32 @@ payload = {
     ],
     "archivos": {
         "main.cpp": """
-#include <iostream>
-#include "utils.h"
+            #include <iostream>
+            #include "utils.h"
 
-using namespace std;
+            using namespace std;
 
-int main() {
-    cout << "El doble de 5 es: " << calcularDoble(5) << endl;
-    return 0;
-}
-""",
-        "utils.h": """
-#ifndef UTILS_H
-#define UTILS_H
+            int main() {
+                cout << "El doble de 5 es: " << calcularDoble(5) << endl;
+                return 0;
+            }
+            """,
+                    "utils.h": """
+            #ifndef UTILS_H
+            #define UTILS_H
 
-int calcularDoble(int n);
+            int calcularDoble(int n);
 
-#endif
-""",
-        "utils.cpp": """
-#include "utils.h"
+            #endif
+            """,
+                    "utils.cpp": """
+            #include "utils.h"
 
-int calcularDoble(int n) {
-    // ERROR LÓGICO INTENCIONADO PARA PROBAR LA IA
-    return n * 3; 
-}
-"""
+            int calcularDoble(int n) {
+                // ERROR LÓGICO INTENCIONADO PARA PROBAR LA IA
+                return n * 3; 
+            }
+            """
     }
 }
 
