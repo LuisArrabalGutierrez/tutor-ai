@@ -13,4 +13,3 @@ numpy
 slowapi
 pytest
 httpx
-EOF
