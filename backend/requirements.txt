@@ -13,3 +13,4 @@ numpy
 slowapi
 pytest
 httpx
+PyPDF2
