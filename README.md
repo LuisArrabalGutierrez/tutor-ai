@@ -1,64 +1,102 @@
-# Tutor con IA - TFG
+# 🎓 Tutor IA Socrático - TFG
 
-Esto es un resúmen de los primeros pasos que se han hecho para la aplicacion, tecnologías, como se instalan,etc
+Un entorno de desarrollo integrado (IDE) web asistido por un Tutor de Inteligencia Artificial Socrático. Diseñado específicamente para ayudar a los alumnos de la Universidad de Granada (UGR) en asignaturas como **Metodología de la Programación (C++)** y **Sistemas Unix/Linux**.
 
-#1.- npm create vite@latest -> React -> TypeScript
+Este proyecto implementa una arquitectura de microservicios con ejecución segura de código (Sandboxing) y un sistema de Recuperación de Información (RAG) basado en los apuntes oficiales.
 
-#2.- creamos la carpeta frontend, con sus respectivas sub-carpetas
+---
 
-#3.- usamos monaco editor porque nos permite pegar el codigo y trabajar sobre el como si estuvieramos en vscode
+## 🚀 Arquitectura y Tecnologías Clave
 
-#4.- hacemos la UI para el frontend
+El sistema se divide en dos entornos independientes, comunicados mediante API REST y WebSockets:
 
-#5.- creamos la carpeta backend, donde instalaremos un entorno virtual que nos permite no ensuciar y trabajar en nuestro ordenador con librerias
-        mkdir backend; python3 -m venv venv
+### Frontend (IDE Interactivo)
+* **React + TypeScript + Vite:** Base del desarrollo ágil y tipado seguro.
+* **Monaco Editor:** Proporciona la experiencia de Visual Studio Code directamente en el navegador.
+* **React Markdown & Syntax Highlighter:** Renderizado de las respuestas de la IA con formato académico y colores de código.
+* **JSZip:** Generación dinámica de archivos comprimidos para descargar proyectos al instante.
 
-...........  5.1.- para ejecutar el entorno virtual source venv/bin/activate ( en la terminal sale a la izquierda (venv))
+### Backend (Orquestador IA y Sandboxing)
+* **FastAPI (Python):** Servidor asíncrono de altísimo rendimiento.
+* **Protocolo MCP (Model Context Protocol):** Desacopla las herramientas de la IA, permitiendo un código modular.
+* **Groq (LLaMA 3.3 70B):** Motor principal de inferencia. Elegido por su velocidad ultra-baja (LPU) y capacidad de *Tool Calling*.
+* **Supabase (PostgreSQL) + Google Generative AI:** Base de datos vectorial para el sistema RAG (Búsqueda por similitud de coseno).
+* **Docker:** Sandbox de seguridad para la ejecución de código C++ y terminal interactiva de Linux.
+* **DuckDuckGoSearch:** Búsqueda web gratuita y anti-scraping para complementar la teoría.
 
-#6.- creamos el archivo requirements.txt, donde ponemos todas las dependencias que vamos a usar
-    6.1.- con el entorno activado: pip install -r requirements.txt
+---
 
-#7.- creamos el main.py con el codigo que queramos
+## 🛡️ Seguridad y Robustez (Grado de Producción)
 
-#8.- ejecutar el servidor web: .....................   uvicorn main:app --reload   ..........................................
+El sistema ha sido fortificado contra ataques comunes de alumnos y cuellos de botella:
 
-#8.- en el front creamos el nuevo servicio para llamar a la api de python
+1. **Aislamiento de Ejecución (Docker Sandbox):** El código C++ de los alumnos se compila y ejecuta en contenedores efímeros sin acceso a internet (`--network none`), con límite de memoria RAM (256MB) y procesador.
+2. **Prevención de Bucles Infinitos:** Implementación de *Timeouts* estrictos (5 segundos) para abortar procesos bloqueantes.
+3. **Protección Anti-Spam (DoS):** Integración de `SlowAPI` con Rate Limiting (Máximo 5 peticiones por minuto por IP) para proteger los costes de la API de Groq.
+4. **Prevención OOM (Out Of Memory):** Validación previa en la subida de apuntes en PDF, bloqueando instantáneamente archivos superiores a 10MB antes de cargarlos en RAM.
 
-#9.- conectamos el front (app.tsx) con el servicio para conectar el front con el back
+---
 
-#10.- creamos la api key en groq, y modificamos el main.py para hacer la llamada al llm y darle el contexto con el codigo del alumno y lo que nos dice por chat
+## ⚙️ Guía de Instalación Rápida
+
+### Prerrequisitos
+* Node.js (v18+)
+* Python (3.11+)
+* Docker Desktop (En ejecución)
+* Claves de API: Supabase, Groq y Google Gemini.
+
+### 1. Configuración del Frontend
+cd frontend
+npm install
+npm run dev
+### 2. Configuración del Backend
+Abre una nueva terminal:
+
+Bash
+cd backend
+# 1. Crear y activar el entorno virtual
+python3 -m venv venv
+source venv/bin/activate  # En Windows: venv\Scripts\activate
+
+# 2. Instalar dependencias
+pip install -r requirements.txt
+
+# 3. Descargar la imagen de C++ para el Sandbox (Solo la primera vez)
+docker pull gcc:latest
+
+# 4. Iniciar el servidor
+uvicorn main:app --reload
+Nota: Recuerda crear un archivo .env en la carpeta backend/ con las variables: GROQ_API_KEY, GOOGLE_API_KEY, SUPABASE_URL y SUPABASE_KEY.
+
+### 🧪 Suite de Pruebas Automatizadas (Testing)
+El backend cuenta con una suite integral de pruebas desarrollada con pytest, dividida en cuatro módulos principales:
+
+test_compiler.py: Valida la compilación (Makefiles, múltiples headers) y el bloqueo de red.
+
+test_ia.py: Comprueba el enrutamiento del chat y el funcionamiento del limitador Anti-Spam.
+
+test_archivos.py: Verifica la subida de PDFs y el límite de RAM.
+
+test_terminal.py: Asegura la conectividad del túnel WebSocket de Linux.
+
+Para ejecutar todas las pruebas, colócate en la carpeta backend/ (con el entorno virtual activado) y ejecuta:
+
+pytest tests/ -v
 
 
-#11.- Creamos el proyecto de supabase y una cuenta (luisarrabal5@gmail), y usando postgresql creamos la tabla donde se guardaran los apuntes
+### 🧠 Flujo de Datos del Tutor Socrático
+El camino que recorre un mensaje desde que el alumno lo envía hasta que recibe respuesta:
 
-#12.- pip install -U google-generativeai pypdf supabase // para hacer el embedding de datos
-#13.- usamos google ai studio mediante la api, para hacer el emedding
+Frontend: React empaqueta la pregunta, los archivos de código actuales y el contexto de la terminal (api.ts).
 
-#14.- hacemos el script para embeber y subir los apuntes a supabase
-    #14.- usamos la similitud del coseno para comparar los vectores ( lo que hace es sacar la distancia de dos vectores, y comprara entre sus valores y direccion [ + - ] )
-    ##haciendo un script en supabase para hacer el coseno
+API: FastAPI recibe el payload, valida la IP (Rate Limiter) y pasa los datos al agente.
 
+Agente IA: tutor.py construye el prompt con etiquetas <XML> y decide la estrategia usando LLaMA 3.3.
 
-#######################################
-#######################################
+Herramientas (MCP): * Si es teoría: Llama a search.py, vectoriza la duda (Google AI) y busca en Supabase.
 
-¿Cuál es la diferencia entre search.py y tutor.py?
-search.py: Se encarga exclusivamente de hablar con la base de datos y Google (buscar la teoría y calcular los porcentajes).
+Si es web: Llama a DuckDuckGo.
 
-tutor.py: Se encarga exclusivamente de hablar con la IA (Groq y Langchain), importando la información que le da search.py.
-############################################
+Respuesta Estricta: La IA genera la respuesta obligando a usar un formato literal para los enlaces ([Doc](URL)).
 
-
-#15.-Instalamos fastapi para crear un servidor web para que el front se comunique con el back   
-
-#16.-Integrado react-markdown y react-syntax-highlighter para que formatee automáticamente la negrita, las listas y, sobre todo, para que el código C++ aparezca con los colores de Visual Studio Code
-
-#17.- pip install mcp langchain-mcp-adapters duckduckgo-search
-
-    17.1.- Duckduck go por que: Es 100% Gratis y no requiere "API Keys", Anti-Scraping, por ejemplo en google puede detectar que eres un bot y bloquear la ip,mas simple de integrar y para busquedas de programacion es muy bueno porque da ejemplos de stackoverflow,github,etc
-
-#18.- instalar npm install jszip para poder empaquetar el codigo para descargarlo el alumno
-
-#16.- resumen por ahora del flujo a pedir algo a la IA:
-
-        React (api.ts) ➡️ main.py ➡️ routers/chat.py ➡️ tutor.py ➡️ search.py ➡️ Supabase ➡️ search.py ➡️ tutor.py ➡️ Groq (LLaMA) ➡️ tutor.py ➡️ routers/chat.py ➡️ React.
+Renderizado: React recibe el Markdown y aplica coloreado de sintaxis a las explicaciones.
