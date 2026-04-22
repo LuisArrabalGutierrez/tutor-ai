@@ -1,0 +1,5 @@
+#!/bin/bash
+cd /home/luisarrabalgutierrez/tutor-ai/backend
+source venv/bin/activate
+pm2 start "python -m uvicorn main:app --host 0.0.0.0 --port 8000" --name "backend"
+pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name "ngrok"
