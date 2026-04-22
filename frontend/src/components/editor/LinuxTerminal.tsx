@@ -3,6 +3,8 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 
+const GOOGLE_TERMINAL_URL = import.meta.env.VITE_GOOGLE_TERMINAL_URL || 'localhost';
+
 interface LinuxTerminalProps {
   onTerminalOutputChange?: (output: string) => void;
 }
@@ -35,7 +37,7 @@ export default function LinuxTerminal({ onTerminalOutputChange }: LinuxTerminalP
     termRef.current = term;
 
     // Conexión WebSocket
-    const ws = new WebSocket('ws://localhost:8000/ws/terminal');
+    const ws = new WebSocket(`ws://${GOOGLE_TERMINAL_URL}:8000/ws/terminal`);
     wsRef.current = ws;
 
     ws.onopen = () => {
