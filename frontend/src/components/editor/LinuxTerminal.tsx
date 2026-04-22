@@ -6,7 +6,7 @@ import '@xterm/xterm/css/xterm.css';
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
 // Usamos la variable de entorno. Si no existe, por defecto localhost.
-const GOOGLE_IP = import.meta.env.VITE_GOOGLE_IP || 'localhost';
+const GOOGLE_IP = import.meta.env.VITE_GOOGLE_TERMINAL_URL || 'localhost';
 
 const TERMINAL_HOST = isLocal ? 'localhost' : GOOGLE_IP;
 interface LinuxTerminalProps {
