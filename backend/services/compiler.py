@@ -53,7 +53,7 @@ def compile_and_run_project(archivos: dict) -> dict:
                 docker_cmd, 
                 capture_output=True, 
                 text=True, 
-                timeout=20
+                timeout=40
             )
             
             log_compilacion = ""
