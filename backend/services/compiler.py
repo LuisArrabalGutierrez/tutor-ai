@@ -66,7 +66,7 @@ def compile_and_run_project(archivos: dict) -> dict:
                 error_msg = log_compilacion if log_compilacion else run_process.stderr
                 return {"output": f"🚨 Error de Compilación o Ejecución:\n{error_msg}", "isError": True}
 
-            LIMITE_SALIDA = 10000
+            LIMITE_SALIDA = 40000
             salida = run_process.stdout[:LIMITE_SALIDA]
             if len(run_process.stdout) > LIMITE_SALIDA:
                 salida += "\n... [Salida truncada por límite de seguridad]"
