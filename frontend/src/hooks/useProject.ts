@@ -2,27 +2,26 @@ import { useState, useEffect } from 'react';
 import JSZip from 'jszip';
 
 const INITIAL_CODE = `#include <iostream>\n\nint main() {\n    std::cout << "¡Hola Mundo desde mi propio IDE!" << std::endl;\n    return 0;\n}`;
-const VALID_EXTENSIONS = ['.cpp', '.h', '.hpp', '.c', '.txt', '.csv', '.json'];
-const STORAGE_KEY = 'tutor_ai_project_files';
+const VALID_EXTENSIONS = ['.cpp', '.h', '.hpp', '.c', '.txt', '.csv', '.json', 'makefile', '.md'];
+const STORAGE_KEY = 'tutor_ai_project_files_v2';
 
 export function useProject() {
-  // 1. Intentamos cargar los archivos guardados al iniciar el estado
   const [projectFiles, setProjectFiles] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch (e) {
-        console.error("Error cargando archivos del localStorage", e);
+        console.error("Error cargando archivos", e);
       }
     }
-    // Si no hay nada guardado, cargamos el código inicial
     return { "main.cpp": INITIAL_CODE };
   });
 
-  const [activeFile, setActiveFile] = useState<string>("main.cpp");
+  const [activeFile, setActiveFile] = useState<string>(() => {
+    return Object.keys(projectFiles)[0] || "main.cpp";
+  });
 
-  // 2. Efecto para persistir los cambios automáticamente
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projectFiles));
   }, [projectFiles]);
@@ -32,37 +31,48 @@ export function useProject() {
     if (!files) return;
 
     const newFilesDict: Record<string, string> = {};
-    let firstCppFile = "";
+    let firstEligibleFile = "";
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      // webkitRelativePath nos da la ruta completa (ej: "mi_proyecto/src/main.cpp")
+      // Quitamos el primer segmento (nombre de la carpeta subida) para que la raíz sea el proyecto
+      const pathParts = file.webkitRelativePath.split('/');
+      const relativePath = pathParts.slice(1).join('/'); 
       
-      if (VALID_EXTENSIONS.includes(extension)) {
+      const fileName = file.name.toLowerCase();
+      const hasValidExt = VALID_EXTENSIONS.some(ext => fileName.endsWith(ext)) || fileName === 'makefile';
+
+      if (hasValidExt) {
         const text = await file.text();
-        newFilesDict[file.name] = text;
-        if (!firstCppFile && (extension === '.cpp' || extension === '.c')) {
-          firstCppFile = file.name;
+        // Si el path queda vacío (archivo en raíz), usamos el nombre directamente
+        const finalPath = relativePath || file.name;
+        newFilesDict[finalPath] = text;
+
+        if (!firstEligibleFile && (finalPath.endsWith('.cpp') || finalPath.endsWith('.c'))) {
+          firstEligibleFile = finalPath;
         }
       }
     }
 
     if (Object.keys(newFilesDict).length > 0) {
       setProjectFiles(newFilesDict);
-      if (firstCppFile) setActiveFile(firstCppFile);
+      setActiveFile(firstEligibleFile || Object.keys(newFilesDict)[0]);
       if (onSuccess) onSuccess();
     }
   };
 
   const handleDownloadZip = async () => {
     const zip = new JSZip();
-    Object.entries(projectFiles).forEach(([path, content]) => zip.file(path, content));
+    Object.entries(projectFiles).forEach(([path, content]) => {
+      zip.file(path, content);
+    });
     const blob = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; 
-    a.download = "proyecto.zip";
-    a.click(); 
+    a.href = url;
+    a.download = "proyecto_tutor_ai.zip";
+    a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -72,13 +82,11 @@ export function useProject() {
     }
   };
 
-  const getLang = (f: string) => {
-    const ext = f.split('.').pop();
-    switch(ext) {
-      case 'cpp': case 'h': case 'hpp': case 'c': return 'cpp';
-      case 'json': return 'json';
-      default: return 'plaintext';
-    }
+  const getLang = (path: string) => {
+    const ext = path.split('.').pop()?.toLowerCase();
+    if (ext === 'cpp' || ext === 'h' || ext === 'hpp' || ext === 'c') return 'cpp';
+    if (ext === 'json') return 'json';
+    return 'plaintext';
   };
 
   return { 
