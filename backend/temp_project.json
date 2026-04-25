@@ -1,1 +1,1 @@
-{"main.cpp": "#include <iostream>\n\nint main() {\n    std::cout << \"\u00c2\u00a1Hola Mundo desde mi propio IDE!\" << std::endl;\n    return 0;\n}"}
+{"main.cpp": "#include <iostream>\n\nint main() {\n    std::cout << \"\u00a1Hola Mundo desde mi propio IDE!\" << std::endl;\n    return 0;\n}"}
