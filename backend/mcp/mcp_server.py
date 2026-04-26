@@ -15,7 +15,7 @@ from duckduckgo_search import DDGS
 mcp = FastMCP("TutorIA_Workspace")
 
 @mcp.tool()
-def compilar_cpp() -> str:
+async def compilar_cpp() -> str:
     """
     Compila y ejecuta el proyecto C++ actual del alumno.
     USO: Utiliza esto SOLO cuando el alumno te pida ejecutar su código o te pregunte por qué su programa da un error de compilación.
@@ -24,7 +24,7 @@ def compilar_cpp() -> str:
     try:
         with open(ruta_json, "r", encoding="utf-8") as f:
             archivos_proyecto = json.load(f)
-        resultado = compile_and_run_project(archivos_proyecto)
+        resultado = await compile_and_run_project(archivos_proyecto)
         return resultado["output"]
     except Exception as e:
         return f"Error al compilar: {str(e)}"
