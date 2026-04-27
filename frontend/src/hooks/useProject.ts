@@ -6,6 +6,8 @@ const VALID_EXTENSIONS = ['.cpp', '.h', '.hpp', '.c', '.txt', '.csv', '.json', '
 const STORAGE_KEY = 'tutor_ai_project_files_v2';
 
 export function useProject() {
+
+  {/* Estados para manejar los archivos del proyecto y el archivo activo, que se inicializan a partir del localStorage o con un archivo por defecto */ }
   const [projectFiles, setProjectFiles] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -25,6 +27,8 @@ export function useProject() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projectFiles));
   }, [projectFiles]);
+  //////////
+
 
   const handleFolderUpload = async (event: React.ChangeEvent<HTMLInputElement>, onSuccess?: () => void) => {
     const files = event.target.files;
