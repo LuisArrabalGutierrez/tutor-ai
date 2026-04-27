@@ -1,4 +1,3 @@
-// Ruta: src/App.tsx
 import { useState } from 'react';
 import CodeEditor from './components/editor/CodeEditor';
 import ChatPanel from './components/chat/ChatPanel';
