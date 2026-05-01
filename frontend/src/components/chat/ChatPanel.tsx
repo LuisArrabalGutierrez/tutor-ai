@@ -1,5 +1,5 @@
 import { useRef, useEffect, memo } from 'react';
-import { Trash2, BotMessageSquare } from 'lucide-react';
+import { Trash2, BotMessageSquare , Square} from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import {type  Message } from '../../types';
@@ -9,10 +9,11 @@ interface ChatPanelProps {
   onSendMessage: (text: string) => void;
   onClearChat: () => void; 
   isLoading: boolean;
+  onStopChat: () => void;
 }
 
 // Usamos memo para evitar re-renders innecesarios del panel si las props no cambian
-export default memo(function ChatPanel({ messages, onSendMessage, onClearChat, isLoading }: ChatPanelProps) {
+export default memo(function ChatPanel({ messages, onSendMessage, onClearChat, onStopChat, isLoading }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -46,13 +47,22 @@ export default memo(function ChatPanel({ messages, onSendMessage, onClearChat, i
         ))}
         
         {isLoading && (
-          <div className="bg-gray-800/50 p-4 rounded-xl self-start rounded-tl-sm border border-gray-700 flex gap-2 items-center shadow-sm">
-            <span className="flex gap-1">
-              <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-              <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-              <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></span>
-            </span>
-            <span className="text-xs text-gray-400 font-medium ml-1">Escribiendo...</span>
+          <div className="self-start flex flex-col gap-2">
+            <div className="bg-gray-800/50 p-4 rounded-xl rounded-tl-sm border border-gray-700 flex gap-2 items-center shadow-sm w-fit">
+              <span className="flex gap-1">
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></span>
+              </span>
+              <span className="text-xs text-gray-400 font-medium ml-1">Escribiendo...</span>
+            </div>
+            {/* Botón de Parar */}
+            <button 
+              onClick={onStopChat}
+              className="text-xs text-red-400/80 hover:text-red-400 hover:bg-red-950/30 px-2 py-1 rounded transition-all flex items-center gap-1.5 w-fit ml-1"
+            >
+              <Square size={10} fill="currentColor" /> Detener generación
+            </button>
           </div>
         )}
         <div ref={messagesEndRef} />
