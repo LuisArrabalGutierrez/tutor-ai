@@ -5,7 +5,7 @@ const isLocal = window.location.hostname === "localhost" || window.location.host
 const API_URL = isLocal ? (import.meta.env.VITE_API_URL || 'http://localhost:8000') : '';
 
 // Tiempos de espera configurables
-const CHAT_TIMEOUT = 45000; // 45 segundos para la IA
+//const CHAT_TIMEOUT = 45000; // 45 segundos para la IA
 const EXECUTE_TIMEOUT = 15000; // 15 segundos para compilar
 
 {/* Función para enviar un mensaje al backend y obtener la respuesta del asistente,
