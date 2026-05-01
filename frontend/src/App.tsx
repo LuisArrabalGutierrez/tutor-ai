@@ -19,7 +19,7 @@ export default function App() {
 
   const { projectFiles, activeFile, setActiveFile, handleFolderUpload, handleDownloadZip, handleEditorChange, getLang } = useProject();
   const { terminalOutput, isCompiling, isTerminalError, handleRunCode, setTerminalMessage } = useTerminal(projectFiles);
-  const { messages, isAiTyping, handleSendMessage, clearChat } = useChat(projectFiles);
+  const { messages, isAiTyping, handleSendMessage, clearChat , stopGeneration} = useChat(projectFiles);
 
   return (
     <div className="flex h-screen w-screen bg-gray-900 text-gray-200 font-sans overflow-hidden">
@@ -76,6 +76,7 @@ export default function App() {
           onSendMessage={(msg) => handleSendMessage(msg, asignatura, terminalContext)}
           onClearChat={clearChat}
           isLoading={isAiTyping}
+          onStopChat={stopGeneration}
         />
       </div>
     </div>

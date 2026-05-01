@@ -11,16 +11,13 @@ const EXECUTE_TIMEOUT = 15000; // 15 segundos para compilar
 {/* Función para enviar un mensaje al backend y obtener la respuesta del asistente,
 que incluye manejo de tiempo de espera para evitar que la IA se quede "colgada" y deje al usuario esperando indefinidamente,
 y devuelve un string en un futuro async*/ }
-export const sendMessageToBackend = async (payload: ChatPayload): Promise<string> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), CHAT_TIMEOUT);// Si la IA tarda más de 45 segundos en responder, se aborta la solicitud y se muestra un mensaje de error al usuario
-
+export const sendMessageToBackend = async (payload: ChatPayload, signal?: AbortSignal): Promise<string> => {
   try {
     const response = await fetch(`${API_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      signal: controller.signal
+      signal: signal // Recibimos el control de cancelación desde el hook
     });
 
     if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
@@ -29,10 +26,14 @@ export const sendMessageToBackend = async (payload: ChatPayload): Promise<string
     return data.reply || data.respuesta;
     
   } catch (error: any) {
-    if (error.name === 'AbortError') throw new Error("La IA tardó demasiado en responder.");
+    if (error.name === 'AbortError') {
+      // Diferenciamos si el usuario lo paró manualmente o si fue un timeout
+      if (signal?.reason === 'MANUAL_STOP') {
+        throw new Error("Generación detenida .");
+      }
+      throw new Error("La IA tardó demasiado en responder.");
+    }
     throw error;
-  } finally {
-    clearTimeout(timeoutId);
   }
 };
 
