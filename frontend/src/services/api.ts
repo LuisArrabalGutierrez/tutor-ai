@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 import type { ChatPayload, ExecuteResponse } from '../types/index.ts';
 
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
@@ -5,31 +6,39 @@ const isLocal = window.location.hostname === "localhost" || window.location.host
 const API_URL = isLocal ? (import.meta.env.VITE_API_URL || 'http://localhost:8000') : '';
 
 // Tiempos de espera configurables
-//const CHAT_TIMEOUT = 45000; // 45 segundos para la IA
-const EXECUTE_TIMEOUT = 15000; // 15 segundos para compilar
+//const CHAT_TIMEOUT = 45000;
+const EXECUTE_TIMEOUT = 15000;
 
-{/* Función para enviar un mensaje al backend y obtener la respuesta del asistente,
-que incluye manejo de tiempo de espera para evitar que la IA se quede "colgada" y deje al usuario esperando indefinidamente,
-y devuelve un string en un futuro async*/ }
+// Envía el mensaje al backend con el token de usuario y maneja la cancelación.
 export const sendMessageToBackend = async (payload: ChatPayload, signal?: AbortSignal): Promise<string> => {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   try {
     const response = await fetch(`${API_URL}/api/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(payload),
-      signal: signal // Recibimos el control de cancelación desde el hook
+      signal
     });
 
     if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
-    const data = await response.json();
-    return data.reply || data.respuesta;
+    const resData = await response.json();
+    return resData.reply || resData.respuesta;
     
   } catch (error: any) {
     if (error.name === 'AbortError') {
-      // Diferenciamos si el usuario lo paró manualmente o si fue un timeout
       if (signal?.reason === 'MANUAL_STOP') {
-        throw new Error("Generación detenida .");
+        throw new Error("Generación detenida.");
       }
       throw new Error("La IA tardó demasiado en responder.");
     }
@@ -37,9 +46,7 @@ export const sendMessageToBackend = async (payload: ChatPayload, signal?: AbortS
   }
 };
 
-{/* Función para enviar los archivos del proyecto al backend y obtener la salida del terminal, 
-que también incluye manejo de tiempo de espera para evitar que el proceso de compilación se quede "colgado" y deje al usuario esperando indefinidamente 
-y devuelve una respuesta en un futuro async*/ }
+// Envía los archivos para compilar y aborta si supera el timeout.
 export const executeCodeBackend = async (archivos: Record<string, string>): Promise<ExecuteResponse> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), EXECUTE_TIMEOUT);

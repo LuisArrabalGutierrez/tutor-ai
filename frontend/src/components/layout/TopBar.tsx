@@ -1,6 +1,7 @@
 import { useRef } from 'react';
-import { Download, Play, Loader2, FolderOpen, Code2, TerminalSquare, Bot } from 'lucide-react';
+import { Download, Play, Loader2, FolderOpen, Code2, TerminalSquare, Bot, User, LogOut, LogIn } from 'lucide-react';
 import type { Asignatura } from '../../types';
+import { supabase } from '../../lib/supabase'; // Asegúrate de que esta ruta sea correcta según tu estructura
 
 interface TopBarProps {
   asignaturaActual: Asignatura;
@@ -11,12 +12,20 @@ interface TopBarProps {
   isCompiling: boolean;
   isChatOpen: boolean;
   toggleChat: () => void;
+  userEmail?: string | null; // Nuevo
+  onOpenLogin: () => void;   // Nuevo
 }
 
 export default function TopBar({ 
-  asignaturaActual, onCambiarAsignatura, onUpload, onDownload, onRun, isCompiling, isChatOpen, toggleChat 
+  asignaturaActual, onCambiarAsignatura, onUpload, onDownload, onRun, isCompiling, isChatOpen, toggleChat, userEmail, onOpenLogin
 }: TopBarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Función para cerrar sesión
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.reload(); // Recarga la app para limpiar el estado
+  };
 
   return (
     <header className="p-3 bg-gray-900 border-b border-gray-800 flex justify-between items-center h-[56px] shrink-0">
@@ -60,6 +69,7 @@ export default function TopBar({
       </div>
       
       <div className="flex items-center gap-2">
+        {/* Ejecutar */}
         {asignaturaActual === 'cpp' && (
           <button 
             onClick={onRun} 
@@ -71,6 +81,7 @@ export default function TopBar({
           </button>
         )}
 
+        {/* Chat */}
         <button 
           onClick={toggleChat} 
           className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-2 border ${isChatOpen ? 'bg-blue-600 text-white border-blue-500' : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'}`}
@@ -81,6 +92,36 @@ export default function TopBar({
           </div>
           Tutor IA
         </button>
+
+        {/* Separador Visual */}
+        <div className="w-px h-6 bg-gray-700 mx-2"></div>
+
+        {/* Sistema de Usuario */}
+        {userEmail ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-full group relative cursor-pointer">
+            <User size={14} className="text-blue-400" />
+            <span className="text-[11px] font-medium text-gray-300 max-w-[120px] truncate">
+              {userEmail}
+            </span>
+            
+            {/* Menú desplegable */}
+            <div className="absolute top-full right-0 mt-2 w-40 bg-gray-900 border border-gray-800 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all z-50">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-400 hover:bg-red-950/20 rounded-lg transition-colors"
+              >
+                <LogOut size={14} /> Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button 
+            onClick={onOpenLogin}
+            className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-md text-xs font-medium transition-all shadow-sm"
+          >
+            <LogIn size={14} /> Entrar
+          </button>
+        )}
       </div>
     </header>
   );
