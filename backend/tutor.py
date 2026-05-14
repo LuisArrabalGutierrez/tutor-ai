@@ -27,12 +27,13 @@ async def get_socratic_response_async(
     historial: list, 
     proyecto_archivos: dict, 
     terminal_context: str = "", 
-    asignatura: str = "cpp"
+    asignatura: str = "cpp",
+    perfil_alumno: dict = None # <-- NUEVO PARÁMETRO
 ) -> str:
     
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Guarda proyecto temporal
+    # Guarda proyecto temporal para las herramientas MCP
     ruta_json = os.path.join(base_dir, "temp_project.json")
     with open(ruta_json, "w", encoding="utf-8") as f:
         json.dump(proyecto_archivos, f)
@@ -50,39 +51,52 @@ async def get_socratic_response_async(
             mcp_tools = await load_mcp_tools(session)
             agent_executor = create_react_agent(llm, tools=mcp_tools)            
             
-            # Configuracion segun asignatura
+            # --- CONSTRUCCIÓN DEL BLOQUE DE PERFIL ADAPTATIVO ---
+            texto_perfil = ""
+            if perfil_alumno:
+                fortalezas = perfil_alumno.get('fortalezas', 'Pendiente de analizar')
+                carencias = perfil_alumno.get('carencias', 'Pendiente de analizar')
+                
+                texto_perfil = f"""
+                === PERFIL FORMATIVO DEL ALUMNO (PERSONALIZACIÓN) ===
+                - Fortalezas: {fortalezas}
+                - Carencias/Debilidades: {carencias}
+                
+                INSTRUCCIÓN PEDAGÓGICA: Utiliza esta información para ajustar tu nivel de dificultad. 
+                Si tiene carencias en un concepto que aparece en su código, sé más incisivo con preguntas socráticas sobre ese tema. 
+                Si domina algo, no te detengas demasiado ahí.
+                """
+
+            # Configuración según asignatura
             if asignatura == "linux":
-                rol_sistema = "Eres un profesor estricto pero justo de 'Sistemas y Órdenes Unix' de la Universidad de Granada (UGR)."
+                rol_sistema = f"Eres un profesor estricto pero justo de 'Sistemas y Órdenes Unix' de la Universidad de Granada (UGR).\n{texto_perfil}"
                 reglas_especificas = """
                         REGLAS ESTRICTAS (LINUX):
-                        0. CONVERSACION: Si el alumno solo saluda (ej. "hola") o hace una pregunta genérica, responde de forma conversacional SIN usar ninguna herramienta.
-                        1. BÚSQUEDA OBLIGATORIA: Si el alumno pregunta por teoría o diapositivas, usa 'buscar_apuntes_ugr'.
-                        2. PROHIBIDO PARAFRASEAR ENLACES: Si usas la herramienta, te devolverá un enlace Markdown. TU PRIMER CARÁCTER EN LA RESPUESTA DEBE SER EL CORCHETE '[' DE ESE ENLACE. Pega el enlace literal y luego da tu explicación.
-                        3. ENFOQUE BASH: Enseña bash, permisos de archivos, tuberías y administración de Linux.
-                        4. MÉTODO SOCRÁTICO: No des el comando exacto al primer intento. Guíale.
-                        5. CONTEXTO VISUAL: Usa lo que ve el alumno en consola para corregirle.
-                        6. CIERRE: Termina siempre con una pregunta que guíe su próximo paso."""
+                        0. CONVERSACION: Si el alumno solo saluda responde de forma conversacional SIN herramientas.
+                        1. BÚSQUEDA OBLIGATORIA: Si pregunta teoría, usa 'buscar_apuntes_ugr'.
+                        2. PROHIBIDO PARAFRASEAR ENLACES: Tu respuesta DEBE empezar con el enlace Markdown.
+                        3. ENFOQUE BASH: Enseña bash, permisos, tuberías y administración.
+                        4. MÉTODO SOCRÁTICO: No des el comando exacto. Guíale.
+                        5. CIERRE: Termina siempre con una pregunta que guíe su próximo paso."""
 
-                # Prepara contexto de terminal
                 if terminal_context.strip():
                     texto_terminal = f"\n\n=== CONTEXTO DE LA TERMINAL ===\n{terminal_context}"
                 else:
                     texto_terminal = "\n\n=== CONTEXTO DE LA TERMINAL ===\n(Terminal vacía)"
                     
             else:
-                rol_sistema = "Eres un tutor socrático de 'Metodología de la Programación' en C/C++ de la Universidad de Granada (UGR)."
+                rol_sistema = f"Eres un tutor socrático de 'Metodología de la Programación' en C/C++ de la Universidad de Granada (UGR).\n{texto_perfil}"
                 reglas_especificas = """
                         REGLAS ESTRICTAS (C++):
-                        0. CONVERSACION: Si el alumno solo saluda (ej. "hola") o hace una pregunta genérica, responde de forma conversacional SIN usar ninguna herramienta.
-                        1. BÚSQUEDA OBLIGATORIA: Si el alumno pregunta "dónde está", "temario", o teoría, usa 'buscar_apuntes_ugr'. 
-                        2. CITAS CLICABLES: La herramienta te dará un enlace Markdown. TU PRIMERA PALABRA DEBE SER ESE ENLACE. Pega el enlace [texto](url) y luego da tu explicación.
-                        3. ANTI-BUCLE: Responde a la ÚLTIMA pregunta del alumno.
-                        4. EXPLICACIÓN: Usa SOLO el texto proporcionado por la herramienta.
-                        5. COMPILADOR: Usa 'compilar_cpp' SOLO si hay errores de código.
-                        6. CIERRE: Termina siempre con una pregunta socrática."""
+                        0. CONVERSACION: Si el alumno solo saluda, responde normalmente SIN herramientas.
+                        1. BÚSQUEDA OBLIGATORIA: Para teoría, usa 'buscar_apuntes_ugr'. 
+                        2. CITAS CLICABLES: Tu respuesta DEBE EMPEZAR con el enlace [texto](url).
+                        3. ANTI-BUCLE: Responde a la ÚLTIMA pregunta.
+                        4. COMPILADOR: Usa 'compilar_cpp' SOLO si hay errores.
+                        5. CIERRE: Termina siempre con una pregunta socrática."""
                 texto_terminal = "" 
 
-            # Construye historial
+            # Construcción de la memoria de la conversación
             MAX_MENSAJES = 10
             historial_recortado = historial[-MAX_MENSAJES:] if len(historial) > MAX_MENSAJES else historial
             
@@ -98,7 +112,7 @@ async def get_socratic_response_async(
             if len(archivos_json) > 15000:
                 archivos_json = archivos_json[:15000] + "\n\n... [TRUNCADO] ..."
                 
-            # Prompt maestro
+            # Prompt Final con Contexto
             estado_actual = f"""=== ARCHIVOS DEL PROYECTO ACTUAL === 
                 {archivos_json} 
                 {texto_terminal}  
@@ -110,12 +124,11 @@ async def get_socratic_response_async(
                 {historial[-1]['content']}
 
                 [RECORDATORIO CRÍTICO]: 
-                - Si el alumno solo dice "hola" o saluda, responde normalmente SIN USAR HERRAMIENTAS.
-                - Si has buscado apuntes, tu respuesta DEBE EMPEZAR obligatoriamente con el enlace en formato [Texto](URL). No introduzcas texto antes."""
+                - Si el alumno saluda, responde sin herramientas.
+                - Si hay enlace de apuntes, ponlo al PRINCIPIO de la respuesta."""
 
             mensajes.append(HumanMessage(content=estado_actual))
 
-            # Ejecucion
             try:
                 respuesta = await agent_executor.ainvoke({"messages": mensajes})
                 return respuesta["messages"][-1].content
