@@ -4,7 +4,7 @@ import ChatPanel from './components/chat/ChatPanel';
 import TopBar from './components/layout/TopBar';
 import Sidebar from './components/editor/SideBar';
 import TerminalPanel from './components/editor/Terminal';
-import { FileCode, X } from 'lucide-react';
+import { FileCode } from 'lucide-react';
 
 import { useProject } from './hooks/useProject';
 import { useChat } from './hooks/UseChat';
