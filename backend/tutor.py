@@ -28,7 +28,7 @@ async def get_socratic_response_async(
     proyecto_archivos: dict, 
     terminal_context: str = "", 
     asignatura: str = "cpp",
-    perfil_alumno: dict = None # <-- NUEVO PARÁMETRO
+    perfil_alumno: dict = None 
 ) -> str:
     
     base_dir = os.path.dirname(os.path.abspath(__file__))
