@@ -17,9 +17,9 @@ llm = ChatGroq(
     api_key=os.getenv("GROQ_API_KEY"),
     #model_name="llama-3.3-70b-versatile" 
     #model_name="llama-3.1-8b-instant"
-    #model_name="openai/gpt-oss-120b"
-    model_name="mixtral-8x7b-32768"
-
+    model_name="openai/gpt-oss-120b"
+    ##### otros nuevos ######
+    
 )
 
 async def get_socratic_response_async(
@@ -84,7 +84,7 @@ async def get_socratic_response_async(
                     texto_terminal = "\n\n=== CONTEXTO DE LA TERMINAL ===\n(Terminal vacía)"
                     
             else:
-                rol_sistema = f"Eres un tutor socrático de 'Metodología de la Programación' en C/C++ de la Universidad de Granada (UGR).\n{texto_perfil}"
+                rol_sistema = f"Eres un tutor socrático de 'Metodología de la Programación' en C/C++ de la Universidad de Granada (UGR).\n{texto_perfil}"                
                 reglas_especificas = """
                         REGLAS ESTRICTAS (C++):
                         0. CONVERSACION: Si el alumno solo saluda, responde normalmente SIN herramientas.
