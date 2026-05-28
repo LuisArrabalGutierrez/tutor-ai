@@ -18,8 +18,7 @@ llm = ChatGroq(
     #model_name="llama-3.3-70b-versatile" 
     #model_name="llama-3.1-8b-instant"
     #model_name="openai/gpt-oss-120b"
-    model_name="deepseek-r1-distill-llama-70b"
-    #model_name="mixtral-8x7b-32768"
+    model_name="mixtral-8x7b-32768"
 
 )
 
