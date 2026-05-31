@@ -42,7 +42,7 @@ async def compile_and_run_project(archivos: dict) -> dict:
 
             res = subprocess.run(
                 ["docker", "exec", "-w", container_workdir, container_name, "bash", "-c", script_interno],
-                capture_output=True, text=True, timeout=30
+                capture_output=True, text=True, timeout=40
             )
             
             cat_log = subprocess.run(["docker", "exec", "-w", container_workdir, container_name, "cat", "compile_log.txt"], capture_output=True, text=True)

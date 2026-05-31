@@ -8,7 +8,7 @@ class WarmPoolManager:
         self.containers = [f"tutor_warm_{i}" for i in range(pool_size)]
 
     async def start_pool(self):
-        print(f"🚀 Iniciando Warm Pool con {self.pool_size} contenedores...")
+        print(f" Iniciando Warm Pool con {self.pool_size} contenedores...")
         # Inicializamos la cola aquí para que use el loop de la app actual
         self.queue = asyncio.Queue()
         
@@ -34,10 +34,10 @@ class WarmPoolManager:
         
         # Tiempo de gracia para que Docker estabilice el sistema de archivos
         await asyncio.sleep(1.5)
-        print("✅ Warm Pool listo.")
+        print(" Warm Pool listo.")
 
     async def stop_pool(self):
-        print("🛑 Deteniendo Warm Pool...")
+        print(" Deteniendo Warm Pool...")
         for name in self.containers:
             subprocess.run(["docker", "stop", name], capture_output=True)
             
