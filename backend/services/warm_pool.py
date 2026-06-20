@@ -9,30 +9,23 @@ class WarmPoolManager:
 
     async def start_pool(self):
         print(f" Iniciando Warm Pool con {self.pool_size} contenedores...")
-        # Inicializamos la cola aquí para que use el loop de la app actual
         self.queue = asyncio.Queue()
         
         for name in self.containers:
-            # Limpieza preventiva
+            # parar si existe
             subprocess.run(["docker", "stop", name], capture_output=True)
             
+            # lanzar limpio
             cmd = [
                 "docker", "run", "-d", "--rm",
                 "--name", name,
-                "--network", "none",       
-                "--memory", "256m",
-                "--memory-swap", "256m",               
-                "--cpus", "0.5",           
-                "--pids-limit", "64",                  
-                "--security-opt", "no-new-privileges", 
-                "--cap-drop", "ALL",                   
                 "tutor-ugr-image:latest",              
-                "tail", "-f", "/dev/null" 
+                "sleep", "infinity" 
             ]
             subprocess.run(cmd, check=True)
             await self.queue.put(name)
         
-        # Tiempo de gracia para que Docker estabilice el sistema de archivos
+        # pausa
         await asyncio.sleep(1.5)
         print(" Warm Pool listo.")
 
@@ -50,7 +43,7 @@ class WarmPoolManager:
 
     async def get_container(self):
         if self.queue is None:
-            raise RuntimeError("El pool no está inicializado.")
+            raise RuntimeError("Pool no inicializado.")
         return await self.queue.get()
 
     def return_container(self, name):
