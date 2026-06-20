@@ -35,7 +35,6 @@ payload = {
             #include "utils.h"
 
             int calcularDoble(int n) {
-                // ERROR LÓGICO INTENCIONADO PARA PROBAR LA IA
                 return n * 3; 
             }
             """
@@ -59,4 +58,4 @@ try:
 
 except Exception as e:
     print(f" Error de conexión: {e}")
-    print("¿Te has asegurado de que uvicorn (FastAPI) está corriendo?")
+    print(" uvicorn (FastAPI) no está corriendo")
