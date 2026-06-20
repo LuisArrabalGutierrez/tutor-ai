@@ -15,31 +15,20 @@ jobs:
           username: luisarrabalgutierrez
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Actualizar el código desde el repositorio
             cd ~/tutor-ai
             git reset --hard origin/main
             git pull origin main
             
-            # 2. Actualizar el entorno Docker (Terminal de alumnos)
-            # Entramos específicamente donde está el Dockerfile
-            cd backend/docker
-            docker build -t tutor-ugr-image:latest .
-            
-            # 3. Configurar el Backend (Python)
+            # actulizar python
             cd ~/tutor-ai/backend
-            # Crear venv si no existe y actualizar dependencias
             [ -d venv ] || python3 -m venv venv
             source venv/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt
             
-            # 4. Gestionar procesos con PM2
-            # Reiniciar backend (si no existe, lo crea)
+            # reiniciar servicios
             pm2 restart backend || pm2 start "python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
-            
-            # Reiniciar ngrok con el dominio estático (si no existe, lo crea)
             pm2 restart ngrok || pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name ngrok
             
-            # 5. Guardar estado y salir
             pm2 save
             exit 0
