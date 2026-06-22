@@ -66,7 +66,6 @@ docker pull gcc:latest
 
 # 4. Iniciar el servidor
 uvicorn main:app --reload
-Nota: Recuerda crear un archivo .env en la carpeta backend/ con las variables: GROQ_API_KEY, GOOGLE_API_KEY, SUPABASE_URL y SUPABASE_KEY.
 
 ### 🧪 Suite de Pruebas Automatizadas (Testing)
 El backend cuenta con una suite integral de pruebas desarrollada con pytest, dividida en cuatro módulos principales:
@@ -83,20 +82,3 @@ Para ejecutar todas las pruebas, colócate en la carpeta backend/ (con el entorn
 
 pytest tests/ -v
 
-
-### 🧠 Flujo de Datos del Tutor Socrático
-El camino que recorre un mensaje desde que el alumno lo envía hasta que recibe respuesta:
-
-Frontend: React empaqueta la pregunta, los archivos de código actuales y el contexto de la terminal (api.ts).
-
-API: FastAPI recibe el payload, valida la IP (Rate Limiter) y pasa los datos al agente.
-
-Agente IA: tutor.py construye el prompt con etiquetas <XML> y decide la estrategia usando LLaMA 3.3.
-
-Herramientas (MCP): * Si es teoría: Llama a search.py, vectoriza la duda (Google AI) y busca en Supabase.
-
-Si es web: Llama a DuckDuckGo.
-
-Respuesta Estricta: La IA genera la respuesta obligando a usar un formato literal para los enlaces ([Doc](URL)).
-
-Renderizado: React recibe el Markdown y aplica coloreado de sintaxis a las explicaciones.
