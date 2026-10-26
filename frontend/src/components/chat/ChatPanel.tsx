@@ -1,8 +1,8 @@
 import { useRef, useEffect, memo } from 'react';
-import { Trash2, BotMessageSquare , Square} from 'lucide-react';
+import { Trash2, BotMessageSquare, Square } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
-import {type  Message } from '../../types';
+import { type Message } from '../../types';
 
 interface ChatPanelProps {
   messages: Message[];
@@ -12,7 +12,6 @@ interface ChatPanelProps {
   onStopChat: () => void;
 }
 
-// Usamos memo para evitar re-renders innecesarios del panel si las props no cambian
 export default memo(function ChatPanel({ messages, onSendMessage, onClearChat, onStopChat, isLoading }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -23,6 +22,9 @@ export default memo(function ChatPanel({ messages, onSendMessage, onClearChat, o
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+  const isWaitingFirstToken = isLoading && lastMessage?.role === 'assistant' && lastMessage?.content === '';
 
   return (
     <div className="flex flex-col h-full w-full bg-gray-950 border-l border-gray-800">
@@ -43,20 +45,24 @@ export default memo(function ChatPanel({ messages, onSendMessage, onClearChat, o
       {/* Área de Mensajes */}
       <div className="flex-grow p-4 overflow-y-auto flex flex-col gap-4 scrollbar-thin scrollbar-thumb-gray-800">
         {messages.map((msg) => (
-          <ChatMessage key={msg.id} msg={msg} />
+          // Solo renderizamos si tiene contenido (evita burbujas vacías durante streaming)
+          msg.content ? <ChatMessage key={msg.id} msg={msg} /> : null
         ))}
         
         {isLoading && (
           <div className="self-start flex flex-col gap-2">
-            <div className="bg-gray-800/50 p-4 rounded-xl rounded-tl-sm border border-gray-700 flex gap-2 items-center shadow-sm w-fit">
-              <span className="flex gap-1">
-                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></span>
-              </span>
-              <span className="text-xs text-gray-400 font-medium ml-1">Escribiendo...</span>
-            </div>
-            {/* Botón de Parar */}
+            {isWaitingFirstToken && (
+              <div className="bg-gray-800/50 p-4 rounded-xl rounded-tl-sm border border-gray-700 flex gap-2 items-center shadow-sm w-fit animate-in fade-in duration-150">
+                <span className="flex gap-1">
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></span>
+                </span>
+                <span className="text-xs text-gray-400 font-medium ml-1">Tutor reflexionando...</span>
+              </div>
+            )}
+            
+            {/* Botón de Parar Generación */}
             <button 
               onClick={onStopChat}
               className="text-xs text-red-400/80 hover:text-red-400 hover:bg-red-950/30 px-2 py-1 rounded transition-all flex items-center gap-1.5 w-fit ml-1"

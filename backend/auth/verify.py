@@ -1,16 +1,29 @@
+import os
+import asyncio
 from fastapi import Header
 from supabase import create_client
-import os
+from dotenv import load_dotenv
 
-supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if (SUPABASE_URL and SUPABASE_KEY) else None
 
 async def get_optional_user(authorization: str = Header(None)):
-    if not authorization: return None
+    if not authorization or not supabase:
+        return None
 
-    #extraemos el token JWT del header "Authorization"
-    token = authorization.replace("Bearer ", "")
+    token = authorization.replace("Bearer ", "").strip()
+    if not token:
+        return None
+
     try:
-        # Verificamos el token y obtenemos el usuario asociado
-        user = supabase.auth.get_user(token)
-        return user.user.id
-    except: return None
+        # Ejecutamos la verificación síncrona en un hilo separado para no bloquear el Event Loop
+        user_res = await asyncio.to_thread(supabase.auth.get_user, token)
+        if user_res and user_res.user:
+            return user_res.user.id
+        return None
+    except Exception:
+        return None

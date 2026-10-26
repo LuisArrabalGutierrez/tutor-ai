@@ -23,10 +23,18 @@ def test_chat_contexto_linux():
     respuesta = response.json()["reply"].lower()
     assert "ls" in respuesta or "comando" in respuesta
 
+def test_chat_streaming_endpoint():
+    payload = {
+        "historial": [{"role": "user", "content": "Hola"}],
+        "archivos": {}, "asignatura": "cpp", "terminal_context": ""
+    }
+    response = client.post("/api/chat/stream", json=payload)
+    assert response.status_code == 200
+    assert "text/event-stream" in response.headers.get("content-type", "")
+
 # --- TEST DE SEGURIDAD ANTI-SPAM ---
 
 def test_seguridad_rate_limiting_chat():
-    # Hemos añadido un mensaje falso al historial para que tutor.py no crashee al leerlo
     payload_valido = {
         "historial": [{"role": "user", "content": "Spam test"}], 
         "archivos": {}, 
@@ -34,7 +42,7 @@ def test_seguridad_rate_limiting_chat():
         "terminal_context": ""
     }
     
-    # Consumimos las 5 peticiones permitidas
+    # Consumimos las 5 peticiones permitidas por minuto
     for _ in range(5):
         client.post("/api/chat", json=payload_valido)
         

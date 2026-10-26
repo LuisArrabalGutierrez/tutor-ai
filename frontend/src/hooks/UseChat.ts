@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import type { Message, Asignatura, ChatPayload } from '../types/index.ts';
-import { sendMessageToBackend } from '../services/api';
+import { sendMessageStreamToBackend } from '../services/api';
 
 export function useChat(projectFiles: Record<string, string>) {
   const [messages, setMessages] = useState<Message[]>([
@@ -13,16 +13,18 @@ export function useChat(projectFiles: Record<string, string>) {
 
   const handleSendMessage = async (text: string, asignatura: Asignatura, terminalContext: string) => {
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
-    const newHistory = [...messages, userMsg];
+    const assistantId = (Date.now() + 1).toString();
     
-    setMessages(newHistory);
+    // Inyectamos el mensaje del usuario y creamos el placeholder del asistente para streaming inmediato
+    const newHistory = [...messages, userMsg];
+    setMessages([...newHistory, { id: assistantId, role: 'assistant', content: '', timestamp: Date.now() }]);
     setIsAiTyping(true);
 
     // Creamos un nuevo controlador para esta petición
     const controller = new AbortController();
     abortControllerRef.current = controller;
     
-    // Mantenemos tu timeout de seguridad de 45 segundos
+    // Timeout de seguridad de 45 segundos
     const timeoutId = setTimeout(() => controller.abort('TIMEOUT'), 45000);
 
     try {
@@ -33,11 +35,19 @@ export function useChat(projectFiles: Record<string, string>) {
         terminal_context: terminalContext
       };
 
-      // Le pasamos la señal de aborto a la API
-      const reply = await sendMessageToBackend(payload, controller.signal);
+      // Streaming en tiempo real token a token
+      await sendMessageStreamToBackend(
+        payload,
+        (tokenChunk: string) => {
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === assistantId ? { ...msg, content: msg.content + tokenChunk } : msg
+            )
+          );
+        },
+        controller.signal
+      );
       
-      const assistantMsg: Message = { id: Date.now().toString(), role: 'assistant', content: reply, timestamp: Date.now() };
-      setMessages(prev => [...prev, assistantMsg]);
     } catch (error: any) {
       const errorMsg: Message = { 
         id: 'err-' + Date.now(), 
@@ -45,7 +55,12 @@ export function useChat(projectFiles: Record<string, string>) {
         content: ` ${error.message || "Conexión interrumpida."}`, 
         timestamp: Date.now() 
       };
-      setMessages(prev => [...prev, errorMsg]);
+      
+      // Si el asistente no llegó a escribir nada antes del error, limpiamos el placeholder vacío
+      setMessages(prev => {
+        const filtered = prev.filter(m => !(m.id === assistantId && m.content.trim() === ''));
+        return [...filtered, errorMsg];
+      });
     } finally {
       clearTimeout(timeoutId);
       abortControllerRef.current = null;
@@ -56,7 +71,7 @@ export function useChat(projectFiles: Record<string, string>) {
   // Función para parar la IA manualmente
   const stopGeneration = () => {
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort('MANUAL_STOP'); // Cancelamos la petición
+      abortControllerRef.current.abort('MANUAL_STOP');
     }
   };
 
@@ -64,7 +79,7 @@ export function useChat(projectFiles: Record<string, string>) {
     messages, 
     isAiTyping, 
     handleSendMessage, 
-    stopGeneration, // Exportamos la nueva función
+    stopGeneration,
     clearChat: () => setMessages([]) 
   };
 }

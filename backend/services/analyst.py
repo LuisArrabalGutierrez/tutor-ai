@@ -1,50 +1,76 @@
+import os
 import json
+import re
+import asyncio
+from typing import Optional
+from pydantic import BaseModel, Field
 from langchain_groq import ChatGroq
+from dotenv import load_dotenv
 
-# Modelo para analisis
-analyst_llm = ChatGroq(model_name="llama-3.1-8b-instant")
+load_dotenv()
+
+class PerfilAnalisis(BaseModel):
+    carencia: str = Field(description="Concepto que el alumno no comprende o le cuesta, máx 5 palabras.")
+    fortaleza: str = Field(description="Concepto que el alumno domina, máx 5 palabras.")
+
+# Modelo 8B ultrarrápido y económico para tareas de clasificación en segundo plano
+analyst_llm = ChatGroq(
+    api_key=os.getenv("GROQ_API_KEY"),
+    model_name="llama-3.1-8b-instant",
+    temperature=0.1
+)
 
 async def update_student_profile(user_id: str, messages: list, code: dict, supabase_client):
-    last_msg = messages[-1]['content']
-    
-    # Prompt mejorado sin ejemplos literales
-    prompt = f"""
-    Eres un evaluador pedagógico. Tu misión es detectar QUÉ NO SABE el alumno y QUÉ DOMINA.
-    CONVERSACIÓN: {last_msg}
+    """Analiza la última interacción del alumno para actualizar sus fortalezas y debilidades pedagógicas."""
+    if not user_id or not messages or not supabase_client:
+        return
 
-    INSTRUCCIONES:
-    1. Si el alumno admite no saber algo, regístralo en 'carencia'.
-    2. Si el alumno NO demuestra dominar nada en este mensaje, el valor de 'fortaleza' DEBE SER el anterior pasado. No inventes datos.
-    3. Sé breve (máximo 5 palabras por campo).
+    last_msg = messages[-1].get('content', '') if messages else ''
+    if not last_msg or len(last_msg.strip()) < 5:
+        return
 
-    Responde SOLO con este formato JSON: {{"carencia": "...", "fortaleza": "..."}}
-    """
-    
+    prompt = f"""Eres un evaluador pedagógico de programación C++ y Linux.
+Tu objetivo es detectar qué concepto NO sabe el alumno (carencia) y qué concepto DOMINA (fortaleza).
+
+Último mensaje del alumno:
+"{last_msg}"
+
+Instrucciones:
+1. 'carencia': Si tiene dudas o errores conceptuales, nómbralo (máximo 5 palabras). Si no hay, pon 'Ninguna detectada'.
+2. 'fortaleza': Si demuestra resolver o razonar bien un concepto, nómbralo (máximo 5 palabras). Si no hay, pon 'Ninguna detectada'.
+3. Responde estrictamente con un objeto JSON: {{"carencia": "...", "fortaleza": "..."}}"""
+
     try:
         response = await analyst_llm.ainvoke(prompt)
-        content = response.content
-        
-        # Limpiar markdown
-        content = content.replace("```json", "").replace("```", "").strip()
-        
-        # Extraer JSON
-        start = content.find('{{')
-        end = content.rfind('}}')
-        if start != -1 and end != -1:
-            # Reemplazo de dobles llaves para el parsing correcto
-            json_str = content[start:end+2].replace("{{", "{").replace("}}", "}")
-            try:
-                data = json.loads(json_str)
-            except:
-                data = json.loads(content[start:end+1])
+        content = response.content.strip()
+
+        # Extracción robusta de JSON mediante expresión regular
+        match = re.search(r'\{.*\}', content, re.DOTALL)
+        if match:
+            json_str = match.group(0)
+            data = json.loads(json_str)
         else:
-            data = json.loads(content)
+            data = {"carencia": "Ninguna detectada", "fortaleza": "Ninguna detectada"}
+
+        carencia = data.get('carencia', 'Ninguna detectada')
+        fortaleza = data.get('fortaleza', 'Ninguna detectada')
+
+        # Si ambos son 'Ninguna detectada', no sobreescribimos con datos vacíos
+        if carencia == "Ninguna detectada" and fortaleza == "Ninguna detectada":
+            return
+
+        def _update_db():
+            update_payload = {}
+            if carencia != "Ninguna detectada":
+                update_payload["carencias"] = carencia
+            if fortaleza != "Ninguna detectada":
+                update_payload["fortalezas"] = fortaleza
             
-        # Guardar DB
-        supabase_client.table("perfiles").update({
-            "fortalezas": data.get('fortaleza', 'Ninguna detectada'),
-            "carencias": data.get('carencia', 'Ninguna detectada')
-        }).eq("id", user_id).execute()
-        
+            if update_payload:
+                supabase_client.table("perfiles").update(update_payload).eq("id", user_id).execute()
+
+        await asyncio.to_thread(_update_db)
+        print(f"✅ [Analista] Perfil de usuario {user_id} actualizado.")
+
     except Exception as e:
-        print(f"ERROR EN ANALISTA: {e}")
+        print(f"⚠️ [Analista] Error actualizando perfil pedagógico: {e}")
