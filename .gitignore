@@ -17,6 +17,12 @@ build/
 out/
 venv/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
 # IDE settings
 .vscode/
 .idea/
@@ -30,3 +36,5 @@ venv/
 Thumbs.db
 
 start_all.sh
+AGENTS.md
+ROADMAP_OPTIMIZACION.md

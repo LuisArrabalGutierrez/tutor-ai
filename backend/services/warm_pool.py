@@ -12,20 +12,27 @@ class WarmPoolManager:
         self.queue = asyncio.Queue()
         
         for name in self.containers:
-            # parar si existe
+            # Forzar limpieza previa
             subprocess.run(["docker", "stop", name], capture_output=True)
             
-            # lanzar limpio
+            # Lanzar el contenedor con el comando 'sleep infinity' al final
             cmd = [
                 "docker", "run", "-d", "--rm",
                 "--name", name,
-                "tutor-ugr-image:latest",              
-                "sleep", "infinity" 
+                "--network", "none",
+                # "--memory", "256m",
+                # "--memory-swap", "256m",
+                # "--cpus", "0.5",
+                #"--pids-limit", "64",
+                #"--security-opt", "no-new-privileges",
+                #"--cap-drop", "ALL",
+                "tutor-ugr-image:latest",
+                "sleep", "infinity"
             ]
             subprocess.run(cmd, check=True)
             await self.queue.put(name)
         
-        # pausa
+        # Pausa para estabilizar
         await asyncio.sleep(1.5)
         print(" Warm Pool listo.")
 
