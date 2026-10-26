@@ -1,3 +1,5 @@
+import os
+import time
 import asyncio
 import json
 from fastapi import APIRouter, Request, HTTPException, Depends, BackgroundTasks
@@ -14,15 +16,30 @@ from slowapi.util import get_remote_address
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
+# Caché en memoria para perfiles de estudiantes (evita consultas redundantes a Supabase)
+_PROFILE_CACHE = {}
+_PROFILE_TTL = 300 # 5 minutos
+
 async def _fetch_user_profile(user_id: str) -> dict:
-    """Carga el perfil pedagógico del alumno en un hilo sin bloquear el Event Loop."""
+    """Carga el perfil pedagógico del alumno con caché en memoria (0ms tras la primera consulta)."""
     if not user_id or not supabase:
         return {}
+    
+    ahora = time.time()
+    if user_id in _PROFILE_CACHE:
+        perfil, expira = _PROFILE_CACHE[user_id]
+        if ahora < expira:
+            return perfil
+
     try:
         def _query():
             res = supabase.table("perfiles").select("*").eq("id", user_id).execute()
             return res.data[0] if res.data else {}
-        return await asyncio.to_thread(_query)
+        perfil = await asyncio.to_thread(_query)
+        if len(_PROFILE_CACHE) > 500:
+            _PROFILE_CACHE.clear()
+        _PROFILE_CACHE[user_id] = (perfil, ahora + _PROFILE_TTL)
+        return perfil
     except Exception as e:
         print(f"⚠️ [Chat] Error cargando perfil: {e}")
         return {}
@@ -76,7 +93,7 @@ async def chat_stream_endpoint(
     background_tasks: BackgroundTasks,
     user_id: str = Depends(get_optional_user)
 ):
-    """Endpoint de streaming en tiempo real (Server-Sent Events) para latencia percibida sub-300ms."""
+    """Endpoint de streaming en tiempo real (Server-Sent Events) para latencia percibida sub-200ms."""
     historial_dict = [m.model_dump() for m in body.historial]
     datos_perfil = await _fetch_user_profile(user_id) if user_id else {}
 
@@ -99,7 +116,7 @@ async def chat_stream_endpoint(
                 perfil_alumno=datos_perfil
             ):
                 if token:
-                    # Formato SSE estándar
+                    # Emisión en formato SSE estándar (sin buffering en Vercel/Nginx)
                     yield f"data: {json.dumps({'token': token})}\n\n"
             
             yield "data: [DONE]\n\n"
