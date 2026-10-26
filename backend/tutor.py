@@ -63,14 +63,22 @@ def buscar_internet(consulta: str) -> str:
 # Herramientas unificadas
 tutor_tools = [buscar_apuntes_ugr, compilar_cpp, buscar_internet]
 
-# --- INICIALIZACIÓN DEL LLM Y AGENTE EN MEMORIA (SINGLETON) ---
+# --- INICIALIZACIÓN DEL LLM CON FALLBACK ---
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
+# Modelo principal para razonamiento pedagógico
 llm = ChatGroq(
-    api_key=GROQ_API_KEY,
+    groq_api_key=GROQ_API_KEY,
     model_name=GROQ_MODEL,
     temperature=0.3
+)
+
+# Modelo ultra-rápido para saludos y fallback ante rate limits (>800 tokens/segundo)
+llm_fast = ChatGroq(
+    groq_api_key=GROQ_API_KEY,
+    model_name="llama-3.1-8b-instant",
+    temperature=0.2
 )
 
 # Compilación única del agente en memoria al arrancar el backend
@@ -178,13 +186,16 @@ async def get_socratic_response_async(
     """Genera la respuesta socrática completa con Fast-Path para saludos (latencia < 150ms)."""
     ultima_pregunta = historial[-1].get("content", "").strip() if historial else ""
 
-    # FAST-PATH: Saludos directos sin invocar agentes ni herramientas
+    # FAST-PATH: Saludos directos ultra-rápidos
     if _es_saludo_o_charla(ultima_pregunta):
-        materia = "Sistemas Unix/Linux" if asignatura == "linux" else "Programación en C++"
-        rol_rapido = f"Eres el Tutor IA Socrático de la Universidad de Granada (UGR) para {materia}. Da una bienvenida cálida, cordial y breve (1-2 frases), invitando al alumno a plantear su duda."
-        mensajes_rapidos = [SystemMessage(content=rol_rapido), HumanMessage(content=ultima_pregunta)]
-        res = await llm.ainvoke(mensajes_rapidos)
-        return res.content
+        try:
+            materia = "Sistemas Unix/Linux" if asignatura == "linux" else "Programación en C++"
+            rol_rapido = f"Eres el Tutor IA Socrático de la Universidad de Granada (UGR) para {materia}. Da una bienvenida cálida, cordial y breve (1-2 frases), invitando al alumno a plantear su duda."
+            mensajes_rapidos = [SystemMessage(content=rol_rapido), HumanMessage(content=ultima_pregunta)]
+            res = await llm_fast.ainvoke(mensajes_rapidos)
+            return res.content
+        except Exception as e_fast:
+            print(f"⚠️ [Fast-Path Fallback]: {e_fast}")
 
     token_context = _current_project_context.set(proyecto_archivos or {})
     try:
@@ -195,8 +206,13 @@ async def get_socratic_response_async(
             asignatura=asignatura,
             perfil_alumno=perfil_alumno
         )
-        respuesta = await agent_executor.ainvoke({"messages": mensajes})
-        return respuesta["messages"][-1].content
+        try:
+            respuesta = await agent_executor.ainvoke({"messages": mensajes})
+            return respuesta["messages"][-1].content
+        except Exception as e_agent:
+            print(f"⚠️ [Agent Fallback a LLM Fast]: {e_agent}")
+            res_fb = await llm_fast.ainvoke(mensajes)
+            return res_fb.content
     except Exception as e:
         print(f"❌ [Tutor] Error en agente: {e}")
         return f"Disculpa, ha ocurrido un error al procesar tu consulta: {str(e)}"
@@ -214,15 +230,18 @@ async def get_socratic_response_stream_async(
     """Transmite en streaming los tokens en tiempo real con Fast-Path para saludos instantáneos."""
     ultima_pregunta = historial[-1].get("content", "").strip() if historial else ""
 
-    # FAST-PATH STREAM: Saludos comienzan a escribirse en pantalla en < 120ms
+    # FAST-PATH STREAM: Saludos comienzan a escribirse en pantalla en < 100ms con llm_fast
     if _es_saludo_o_charla(ultima_pregunta):
-        materia = "Sistemas Unix/Linux" if asignatura == "linux" else "Programación en C++"
-        rol_rapido = f"Eres el Tutor IA Socrático de la Universidad de Granada (UGR) para {materia}. Da una bienvenida cálida, cordial y breve (1-2 frases), invitando al alumno a plantear su duda."
-        mensajes_rapidos = [SystemMessage(content=rol_rapido), HumanMessage(content=ultima_pregunta)]
-        async for chunk in llm.astream(mensajes_rapidos):
-            if chunk.content:
-                yield chunk.content
-        return
+        try:
+            materia = "Sistemas Unix/Linux" if asignatura == "linux" else "Programación en C++"
+            rol_rapido = f"Eres el Tutor IA Socrático de la Universidad de Granada (UGR) para {materia}. Da una bienvenida cálida, cordial y breve (1-2 frases), invitando al alumno a plantear su duda."
+            mensajes_rapidos = [SystemMessage(content=rol_rapido), HumanMessage(content=ultima_pregunta)]
+            async for chunk in llm_fast.astream(mensajes_rapidos):
+                if chunk.content:
+                    yield chunk.content
+            return
+        except Exception as e_fast_stream:
+            print(f"⚠️ [Fast-Path Stream Fallback]: {e_fast_stream}")
 
     token_context = _current_project_context.set(proyecto_archivos or {})
     try:
@@ -234,13 +253,17 @@ async def get_socratic_response_stream_async(
             perfil_alumno=perfil_alumno
         )
 
-        async for event in agent_executor.astream_events({"messages": mensajes}, version="v2"):
-            kind = event.get("event")
-            
-            # Emitir tokens del modelo a medida que van saliendo de Groq
-            if kind == "on_chat_model_stream":
-                chunk = event.get("data", {}).get("chunk")
-                if chunk and chunk.content:
+        try:
+            async for event in agent_executor.astream_events({"messages": mensajes}, version="v2"):
+                kind = event.get("event")
+                if kind == "on_chat_model_stream":
+                    chunk = event.get("data", {}).get("chunk")
+                    if chunk and chunk.content:
+                        yield chunk.content
+        except Exception as e_stream_agent:
+            print(f"⚠️ [Stream Agent Fallback a Fast]: {e_stream_agent}")
+            async for chunk in llm_fast.astream(mensajes):
+                if chunk.content:
                     yield chunk.content
 
     except Exception as e:
