@@ -2,6 +2,7 @@ import os
 import time
 import asyncio
 import json
+import traceback
 from fastapi import APIRouter, Request, HTTPException, Depends, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from schemas.payload import ChatRequest
@@ -81,8 +82,9 @@ async def chat_endpoint(
         raise
         
     except Exception as e:
+        traceback.print_exc()
         print(f"❌ Error en chat: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error interno del tutor")
+        raise HTTPException(status_code=500, detail=f"Error en tutor: {str(e)}")
 
 
 @router.post("/chat/stream")
@@ -123,6 +125,7 @@ async def chat_stream_endpoint(
         except asyncio.CancelledError:
             print("🛑 [Stream] Flujo cancelado por el cliente.")
         except Exception as e:
+            traceback.print_exc()
             print(f"❌ [Stream Error]: {e}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
