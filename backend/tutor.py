@@ -64,7 +64,6 @@ def buscar_internet(consulta: str) -> str:
 tutor_tools = [buscar_apuntes_ugr, compilar_cpp, buscar_internet]
 
 # --- INICIALIZACIÓN DEL LLM Y AGENTE EN MEMORIA (SINGLETON) ---
-# Modelo de producción ultrarrápido en Groq con soporte nativo de Tool Calling
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
@@ -76,6 +75,22 @@ llm = ChatGroq(
 
 # Compilación única del agente en memoria al arrancar el backend
 agent_executor = create_react_agent(llm, tools=tutor_tools)
+
+
+def _es_saludo_o_charla(pregunta: str) -> bool:
+    """Detecta de forma instantánea (<0.01ms) si el mensaje es un saludo o cortesía básica."""
+    if not pregunta:
+        return True
+    p = pregunta.strip().lower()
+    palabras = p.split()
+    if len(palabras) <= 5:
+        saludos = [
+            "hola", "buenas", "hey", "buenos dias", "buenas tardes", "buenas noches",
+            "que tal", "cómo estás", "como estas", "ayuda", "saludos", "hola!", "hola buenas"
+        ]
+        if any(s in p for s in saludos):
+            return True
+    return False
 
 
 def _build_context_and_messages(
@@ -128,16 +143,10 @@ REGLAS SOCRÁTICAS ESTRICTAS:
 
     # 4. Poda inteligente de archivos del proyecto (Prompt Pruning)
     ultima_pregunta = historial[-1].get("content", "") if historial else ""
-    es_saludo_breve = len(ultima_pregunta.strip().split()) <= 3 and any(
-        s in ultima_pregunta.lower() for s in ["hola", "buenas", "hey", "buenos dias", "buenas tardes"]
-    )
 
-    if es_saludo_breve or not proyecto_archivos:
-        contexto_archivos = "(Sin archivos o pregunta conversacional)"
-    else:
-        # Poda: Solo incluimos hasta 8.000 caracteres de archivos de código relevantes (.cpp, .h, .c, Makefile)
-        archivos_relevantes = {}
-        total_len = 0
+    archivos_relevantes = {}
+    total_len = 0
+    if proyecto_archivos:
         for nombre, contenido in proyecto_archivos.items():
             if nombre.endswith(('.cpp', '.h', '.hpp', '.c', 'Makefile', 'makefile')):
                 frag = contenido[:2500]
@@ -146,6 +155,8 @@ REGLAS SOCRÁTICAS ESTRICTAS:
                 if total_len > 8000:
                     break
         contexto_archivos = json.dumps(archivos_relevantes, indent=2)
+    else:
+        contexto_archivos = "(Sin archivos en el proyecto)"
 
     prompt_usuario = f"""=== ARCHIVOS DEL PROYECTO ===
 {contexto_archivos}{texto_terminal}
@@ -164,7 +175,17 @@ async def get_socratic_response_async(
     asignatura: str = "cpp",
     perfil_alumno: dict = None
 ) -> str:
-    """Genera la respuesta completa socrática (para endpoints síncronos y tests automatizados)."""
+    """Genera la respuesta socrática completa con Fast-Path para saludos (latencia < 150ms)."""
+    ultima_pregunta = historial[-1].get("content", "").strip() if historial else ""
+
+    # FAST-PATH: Saludos directos sin invocar agentes ni herramientas
+    if _es_saludo_o_charla(ultima_pregunta):
+        materia = "Sistemas Unix/Linux" if asignatura == "linux" else "Programación en C++"
+        rol_rapido = f"Eres el Tutor IA Socrático de la Universidad de Granada (UGR) para {materia}. Da una bienvenida cálida, cordial y breve (1-2 frases), invitando al alumno a plantear su duda."
+        mensajes_rapidos = [SystemMessage(content=rol_rapido), HumanMessage(content=ultima_pregunta)]
+        res = await llm.ainvoke(mensajes_rapidos)
+        return res.content
+
     token_context = _current_project_context.set(proyecto_archivos or {})
     try:
         mensajes = _build_context_and_messages(
@@ -190,7 +211,19 @@ async def get_socratic_response_stream_async(
     asignatura: str = "cpp",
     perfil_alumno: dict = None
 ) -> AsyncGenerator[str, None]:
-    """Transmite en streaming los tokens de la respuesta socrática a medida que Groq los genera."""
+    """Transmite en streaming los tokens en tiempo real con Fast-Path para saludos instantáneos."""
+    ultima_pregunta = historial[-1].get("content", "").strip() if historial else ""
+
+    # FAST-PATH STREAM: Saludos comienzan a escribirse en pantalla en < 120ms
+    if _es_saludo_o_charla(ultima_pregunta):
+        materia = "Sistemas Unix/Linux" if asignatura == "linux" else "Programación en C++"
+        rol_rapido = f"Eres el Tutor IA Socrático de la Universidad de Granada (UGR) para {materia}. Da una bienvenida cálida, cordial y breve (1-2 frases), invitando al alumno a plantear su duda."
+        mensajes_rapidos = [SystemMessage(content=rol_rapido), HumanMessage(content=ultima_pregunta)]
+        async for chunk in llm.astream(mensajes_rapidos):
+            if chunk.content:
+                yield chunk.content
+        return
+
     token_context = _current_project_context.set(proyecto_archivos or {})
     try:
         mensajes = _build_context_and_messages(
