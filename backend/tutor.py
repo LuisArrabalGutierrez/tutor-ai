@@ -64,7 +64,8 @@ def buscar_internet(consulta: str) -> str:
 tutor_tools = [buscar_apuntes_ugr, compilar_cpp, buscar_internet]
 
 # --- INICIALIZACIÓN DEL LLM CON FALLBACK ---
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+GROQ_FAST_MODEL = os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 # Modelo principal para razonamiento pedagógico
@@ -77,7 +78,7 @@ llm = ChatGroq(
 # Modelo ultra-rápido para saludos y fallback ante rate limits (>800 tokens/segundo)
 llm_fast = ChatGroq(
     groq_api_key=GROQ_API_KEY,
-    model_name="llama-3.1-8b-instant",
+    model_name=GROQ_FAST_MODEL,
     temperature=0.2
 )
 
