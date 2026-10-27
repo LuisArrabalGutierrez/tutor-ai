@@ -13,10 +13,11 @@ class PerfilAnalisis(BaseModel):
     carencia: str = Field(description="Concepto que el alumno no comprende o le cuesta, máx 5 palabras.")
     fortaleza: str = Field(description="Concepto que el alumno domina, máx 5 palabras.")
 
-# Modelo 8B ultrarrápido y económico para tareas de clasificación en segundo plano
+# Modelo rápido y económico para tareas de clasificación en segundo plano
+GROQ_FAST_MODEL = os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
 analyst_llm = ChatGroq(
     api_key=os.getenv("GROQ_API_KEY"),
-    model_name="llama-3.1-8b-instant",
+    model_name=GROQ_FAST_MODEL,
     temperature=0.1
 )
 
