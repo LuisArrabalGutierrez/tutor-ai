@@ -13,13 +13,30 @@ class PerfilAnalisis(BaseModel):
     carencia: str = Field(description="Concepto que el alumno no comprende o le cuesta, máx 5 palabras.")
     fortaleza: str = Field(description="Concepto que el alumno domina, máx 5 palabras.")
 
-# Modelo rápido y económico para tareas de clasificación en segundo plano
+# Modelo rápido y económico para tareas de clasificación en segundo plano (Gemini 1M TPM o Groq)
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_FAST_MODEL = os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
-analyst_llm = ChatGroq(
-    api_key=os.getenv("GROQ_API_KEY"),
-    model_name=GROQ_FAST_MODEL,
-    temperature=0.1
-)
+
+analyst_llm = None
+if GOOGLE_API_KEY:
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        analyst_llm = ChatGoogleGenerativeAI(
+            model=GEMINI_MODEL,
+            google_api_key=GOOGLE_API_KEY,
+            temperature=0.1
+        )
+    except Exception as e:
+        print(f"⚠️ [Analyst Init] Fallback a Groq: {e}")
+
+if not analyst_llm and GROQ_API_KEY:
+    analyst_llm = ChatGroq(
+        api_key=GROQ_API_KEY,
+        model_name=GROQ_FAST_MODEL,
+        temperature=0.1
+    )
 
 async def update_student_profile(user_id: str, messages: list, code: dict, supabase_client):
     """Analiza la última interacción del alumno para actualizar sus fortalezas y debilidades pedagógicas."""

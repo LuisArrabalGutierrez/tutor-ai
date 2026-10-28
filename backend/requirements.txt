@@ -9,6 +9,7 @@ langchain-mcp-adapters
 mcp
 supabase
 google-genai
+langchain-google-genai
 numpy
 slowapi
 pytest

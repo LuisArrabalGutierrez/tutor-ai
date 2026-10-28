@@ -36,16 +36,18 @@ def test_chat_streaming_endpoint():
 
 def test_seguridad_rate_limiting_chat():
     payload_valido = {
-        "historial": [{"role": "user", "content": "Spam test"}], 
+        "historial": [{"role": "user", "content": "Hola"}], 
         "archivos": {}, 
         "asignatura": "cpp", 
         "terminal_context": ""
     }
     
-    # Consumimos las 5 peticiones permitidas por minuto
-    for _ in range(5):
-        client.post("/api/chat", json=payload_valido)
+    # Consumimos peticiones consecutivas hasta superar el límite por minuto (15)
+    fue_bloqueado = False
+    for _ in range(20):
+        r = client.post("/api/chat", json=payload_valido)
+        if r.status_code == 429:
+            fue_bloqueado = True
+            break
         
-    # La petición 6 DEBE devolver un error 429 (Too Many Requests)
-    response_bloqueada = client.post("/api/chat", json=payload_valido)
-    assert response_bloqueada.status_code == 429
+    assert fue_bloqueado, "El rate limiter debería devolver 429 al exceder la cuota por minuto"

@@ -14,7 +14,29 @@ from services.analyst import update_student_profile
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-limiter = Limiter(key_func=get_remote_address)
+def get_student_identifier(request: Request) -> str:
+    """
+    Identificador único por alumno para el Rate Limiter.
+    Evita colapsar a todos los alumnos bajo la misma IP cuando se accede desde proxies (Vercel/Ngrok).
+    """
+    # 1. Prioridad: Token de sesión del alumno autenticado
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header.replace("Bearer ", "").strip()
+        if len(token) > 15:
+            return f"user:{token[-16:]}"
+
+    # 2. Si no viene token, usar la IP real del alumno vía X-Forwarded-For
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        real_ip = forwarded_for.split(",")[0].strip()
+        if real_ip:
+            return f"ip:{real_ip}"
+
+    # 3. Fallback a la IP de la conexión directa
+    return f"client:{get_remote_address(request)}"
+
+limiter = Limiter(key_func=get_student_identifier)
 router = APIRouter()
 
 # Caché en memoria para perfiles de estudiantes (evita consultas redundantes a Supabase)
@@ -46,7 +68,7 @@ async def _fetch_user_profile(user_id: str) -> dict:
         return {}
 
 @router.post("/chat")
-@limiter.limit("5/minute")
+@limiter.limit("15/minute")
 async def chat_endpoint(
     request: Request, 
     body: ChatRequest,
@@ -66,7 +88,8 @@ async def chat_endpoint(
             perfil_alumno=datos_perfil
         )
 
-        if user_id:
+        # Análisis pedagógico en background con debounce (cada 3 interacciones o en la 2ª)
+        if user_id and len(historial_dict) >= 2 and (len(historial_dict) % 3 == 0 or len(historial_dict) == 2):
             background_tasks.add_task(
                 update_student_profile, 
                 user_id, 
@@ -88,7 +111,7 @@ async def chat_endpoint(
 
 
 @router.post("/chat/stream")
-@limiter.limit("5/minute")
+@limiter.limit("15/minute")
 async def chat_stream_endpoint(
     request: Request,
     body: ChatRequest,
@@ -99,7 +122,8 @@ async def chat_stream_endpoint(
     historial_dict = [m.model_dump() for m in body.historial]
     datos_perfil = await _fetch_user_profile(user_id) if user_id else {}
 
-    if user_id:
+    # Análisis pedagógico en background con debounce (cada 3 interacciones o en la 2ª)
+    if user_id and len(historial_dict) >= 2 and (len(historial_dict) % 3 == 0 or len(historial_dict) == 2):
         background_tasks.add_task(
             update_student_profile, 
             user_id, 
