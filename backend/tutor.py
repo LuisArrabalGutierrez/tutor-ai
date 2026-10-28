@@ -9,6 +9,11 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import create_react_agent
 
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+except ImportError:
+    ChatGoogleGenerativeAI = None
+
 from services.search import search_theory_logic
 from services.compiler import compile_and_run_project
 
@@ -63,27 +68,71 @@ def buscar_internet(consulta: str) -> str:
 # Herramientas unificadas
 tutor_tools = [buscar_apuntes_ugr, compilar_cpp, buscar_internet]
 
-# --- INICIALIZACIÓN DEL LLM CON FALLBACK ---
+# --- INICIALIZACIÓN MULTI-PROVEEDOR Y RESILIENCIA (1M TPM CON GEMINI + FALLBACK GROQ) ---
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 GROQ_FAST_MODEL = os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# Modelo principal para razonamiento pedagógico
-llm = ChatGroq(
-    groq_api_key=GROQ_API_KEY,
-    model_name=GROQ_MODEL,
-    temperature=0.3
-)
+primary_agent = None
+fallback_agent = None
+llm_fast = None
 
-# Modelo ultra-rápido para saludos y fallback ante rate limits (>800 tokens/segundo)
-llm_fast = ChatGroq(
-    groq_api_key=GROQ_API_KEY,
-    model_name=GROQ_FAST_MODEL,
-    temperature=0.2
-)
+# 1. Configuración de Groq (secundario o fast-fallback)
+llm_groq = None
+if GROQ_API_KEY:
+    try:
+        llm_groq = ChatGroq(
+            groq_api_key=GROQ_API_KEY,
+            model_name=GROQ_MODEL,
+            temperature=0.3
+        )
+        llm_fast = ChatGroq(
+            groq_api_key=GROQ_API_KEY,
+            model_name=GROQ_FAST_MODEL,
+            temperature=0.2
+        )
+    except Exception as e:
+        print(f"⚠️ [Tutor Init] Error inicializando ChatGroq: {e}")
 
-# Compilación única del agente en memoria al arrancar el backend
-agent_executor = create_react_agent(llm, tools=tutor_tools)
+# 2. Configuración de Google Gemini (motor principal de alta capacidad: 1M TPM)
+llm_gemini = None
+if GOOGLE_API_KEY and ChatGoogleGenerativeAI:
+    try:
+        llm_gemini = ChatGoogleGenerativeAI(
+            model=GEMINI_MODEL,
+            google_api_key=GOOGLE_API_KEY,
+            temperature=0.3
+        )
+        if not llm_fast:
+            llm_fast = llm_gemini
+    except Exception as e:
+        print(f"⚠️ [Tutor Init] Error inicializando Gemini: {e}")
+
+# Asignación jerárquica de agentes ReAct
+if llm_gemini:
+    primary_agent = create_react_agent(llm_gemini, tools=tutor_tools)
+    if llm_groq:
+        fallback_agent = create_react_agent(llm_groq, tools=tutor_tools)
+elif llm_groq:
+    primary_agent = create_react_agent(llm_groq, tools=tutor_tools)
+
+
+def _extract_text_content(content) -> str:
+    """Extrae texto plano limpio compatible con strings directos y bloques de Gemini/OpenAI."""
+    if isinstance(content, str):
+        return content
+    elif isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and "text" in item:
+                parts.append(item["text"])
+        return "".join(parts)
+    return str(content) if content is not None else ""
 
 
 def _es_saludo_o_charla(pregunta: str) -> bool:
@@ -184,17 +233,17 @@ async def get_socratic_response_async(
     asignatura: str = "cpp",
     perfil_alumno: dict = None
 ) -> str:
-    """Genera la respuesta socrática completa con Fast-Path para saludos (latencia < 150ms)."""
+    """Genera la respuesta socrática completa con Fast-Path para saludos y cascada de resiliencia."""
     ultima_pregunta = historial[-1].get("content", "").strip() if historial else ""
 
     # FAST-PATH: Saludos directos ultra-rápidos
-    if _es_saludo_o_charla(ultima_pregunta):
+    if _es_saludo_o_charla(ultima_pregunta) and llm_fast:
         try:
             materia = "Sistemas Unix/Linux" if asignatura == "linux" else "Programación en C++"
             rol_rapido = f"Eres el Tutor IA Socrático de la Universidad de Granada (UGR) para {materia}. Da una bienvenida cálida, cordial y breve (1-2 frases), invitando al alumno a plantear su duda."
             mensajes_rapidos = [SystemMessage(content=rol_rapido), HumanMessage(content=ultima_pregunta)]
             res = await llm_fast.ainvoke(mensajes_rapidos)
-            return res.content
+            return _extract_text_content(res.content)
         except Exception as e_fast:
             print(f"⚠️ [Fast-Path Fallback]: {e_fast}")
 
@@ -207,13 +256,29 @@ async def get_socratic_response_async(
             asignatura=asignatura,
             perfil_alumno=perfil_alumno
         )
-        try:
-            respuesta = await agent_executor.ainvoke({"messages": mensajes})
-            return respuesta["messages"][-1].content
-        except Exception as e_agent:
-            print(f"⚠️ [Agent Fallback a LLM Fast]: {e_agent}")
+
+        # 1. Intento con Agente Primario (Gemini 2.5 Flash / 1M TPM)
+        if primary_agent:
+            try:
+                respuesta = await primary_agent.ainvoke({"messages": mensajes})
+                return _extract_text_content(respuesta["messages"][-1].content)
+            except Exception as e_primary:
+                print(f"⚠️ [Tutor Fallback a Secundario]: Error en agente primario: {e_primary}")
+
+        # 2. Intento con Agente Secundario (Fallback Groq)
+        if fallback_agent:
+            try:
+                respuesta = await fallback_agent.ainvoke({"messages": mensajes})
+                return _extract_text_content(respuesta["messages"][-1].content)
+            except Exception as e_fallback:
+                print(f"⚠️ [Tutor Fallback a LLM Fast]: Error en agente secundario: {e_fallback}")
+
+        # 3. Fallback directo a llm_fast
+        if llm_fast:
             res_fb = await llm_fast.ainvoke(mensajes)
-            return res_fb.content
+            return _extract_text_content(res_fb.content)
+
+        return "Disculpa, el servicio de tutoría no está disponible en este momento."
     except Exception as e:
         print(f"❌ [Tutor] Error en agente: {e}")
         return f"Disculpa, ha ocurrido un error al procesar tu consulta: {str(e)}"
@@ -228,18 +293,19 @@ async def get_socratic_response_stream_async(
     asignatura: str = "cpp",
     perfil_alumno: dict = None
 ) -> AsyncGenerator[str, None]:
-    """Transmite en streaming los tokens en tiempo real con Fast-Path para saludos instantáneos."""
+    """Transmite en streaming los tokens en tiempo real con Fast-Path y tolerancia a fallos multi-proveedor."""
     ultima_pregunta = historial[-1].get("content", "").strip() if historial else ""
 
-    # FAST-PATH STREAM: Saludos comienzan a escribirse en pantalla en < 100ms con llm_fast
-    if _es_saludo_o_charla(ultima_pregunta):
+    # FAST-PATH STREAM: Saludos comienzan a escribirse en pantalla en < 100ms
+    if _es_saludo_o_charla(ultima_pregunta) and llm_fast:
         try:
             materia = "Sistemas Unix/Linux" if asignatura == "linux" else "Programación en C++"
             rol_rapido = f"Eres el Tutor IA Socrático de la Universidad de Granada (UGR) para {materia}. Da una bienvenida cálida, cordial y breve (1-2 frases), invitando al alumno a plantear su duda."
             mensajes_rapidos = [SystemMessage(content=rol_rapido), HumanMessage(content=ultima_pregunta)]
             async for chunk in llm_fast.astream(mensajes_rapidos):
-                if chunk.content:
-                    yield chunk.content
+                texto = _extract_text_content(chunk.content)
+                if texto:
+                    yield texto
             return
         except Exception as e_fast_stream:
             print(f"⚠️ [Fast-Path Stream Fallback]: {e_fast_stream}")
@@ -254,18 +320,46 @@ async def get_socratic_response_stream_async(
             perfil_alumno=perfil_alumno
         )
 
-        try:
-            async for event in agent_executor.astream_events({"messages": mensajes}, version="v2"):
-                kind = event.get("event")
-                if kind == "on_chat_model_stream":
-                    chunk = event.get("data", {}).get("chunk")
-                    if chunk and chunk.content:
-                        yield chunk.content
-        except Exception as e_stream_agent:
-            print(f"⚠️ [Stream Agent Fallback a Fast]: {e_stream_agent}")
+        streamed_any = False
+
+        # 1. Stream con Agente Primario (Gemini 2.5 Flash / 1.000.000 TPM)
+        if primary_agent:
+            try:
+                async for event in primary_agent.astream_events({"messages": mensajes}, version="v2"):
+                    kind = event.get("event")
+                    if kind == "on_chat_model_stream":
+                        chunk = event.get("data", {}).get("chunk")
+                        if chunk and chunk.content:
+                            texto = _extract_text_content(chunk.content)
+                            if texto:
+                                streamed_any = True
+                                yield texto
+                return
+            except Exception as e_stream_primary:
+                print(f"⚠️ [Stream Primary Fallback a Secundario]: {e_stream_primary}")
+
+        # 2. Si falló el primario sin haber emitido nada, intentar con el Secundario (Fallback Groq)
+        if not streamed_any and fallback_agent:
+            try:
+                async for event in fallback_agent.astream_events({"messages": mensajes}, version="v2"):
+                    kind = event.get("event")
+                    if kind == "on_chat_model_stream":
+                        chunk = event.get("data", {}).get("chunk")
+                        if chunk and chunk.content:
+                            texto = _extract_text_content(chunk.content)
+                            if texto:
+                                streamed_any = True
+                                yield texto
+                return
+            except Exception as e_stream_sec:
+                print(f"⚠️ [Stream Secundario Fallback a Fast]: {e_stream_sec}")
+
+        # 3. Si ambos fallaron antes de emitir, fallback directo a llm_fast
+        if not streamed_any and llm_fast:
             async for chunk in llm_fast.astream(mensajes):
-                if chunk.content:
-                    yield chunk.content
+                texto = _extract_text_content(chunk.content)
+                if texto:
+                    yield texto
 
     except Exception as e:
         print(f"❌ [Tutor Stream] Error en streaming: {e}")
