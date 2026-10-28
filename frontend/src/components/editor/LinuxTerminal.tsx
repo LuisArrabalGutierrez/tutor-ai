@@ -42,12 +42,27 @@ export default function LinuxTerminal({ onTerminalOutputChange }: LinuxTerminalP
     fitAddon.fit();
     termRef.current = term;
 
+    term.writeln('\x1b[33m[Conectando con el entorno Linux UGR...]\x1b[0m');
+
     // Conexión WebSocket
     const ws = new WebSocket(socketUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
+      term.clear();
       term.writeln('\x1b[32;1m[Conexión establecida con el servidor Linux de la UGR]\x1b[0m\r\n');
+    };
+
+    ws.onerror = () => {
+      term.writeln('\r\n\x1b[31;1m[Error de conexión con el WebSocket de la terminal]\x1b[0m');
+      term.writeln(`\x1b[33mNo se pudo conectar a: ${socketUrl}\x1b[0m`);
+      term.writeln('\x1b[90mEn producción HTTPS, la terminal requiere un túnel seguro WSS activo (ej. Ngrok).\x1b[0m\r\n');
+    };
+
+    ws.onclose = (event) => {
+      if (!event.wasClean) {
+        term.writeln('\r\n\x1b[31m[Conexión cerrada por el servidor]\x1b[0m\r\n');
+      }
     };
 
     // Renderiza salida del servidor y actualiza el historial
