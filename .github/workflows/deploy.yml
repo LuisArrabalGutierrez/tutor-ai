@@ -27,7 +27,7 @@ jobs:
             pip install -r requirements.txt
             
             # reiniciar servicios
-            pm2 restart backend || pm2 start "python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
+            pm2 restart backend || pm2 start "./venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
             pm2 restart ngrok || pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name ngrok
             
             pm2 save

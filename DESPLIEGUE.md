@@ -87,7 +87,7 @@ pm2 delete all
 # 1. Arranque del Backend (FastAPI) en el puerto 8000
 cd ~/tutor-ai/backend
 source venv/bin/activate
-pm2 start "python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
+pm2 start "./venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
 
 # 2. Arranque del Túnel Ngrok con dominio estático vinculado al puerto 8000
 pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name ngrok
@@ -140,7 +140,7 @@ jobs:
             pip install -r requirements.txt
             
             # 4. Zero-Downtime Restart: Reinicio de servicios
-            pm2 restart backend || pm2 start "python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
+            pm2 restart backend || pm2 start "./venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
             pm2 restart ngrok || pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name ngrok
             
             # 5. Guardado de estado
