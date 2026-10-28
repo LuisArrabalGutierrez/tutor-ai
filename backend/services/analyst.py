@@ -15,7 +15,7 @@ class PerfilAnalisis(BaseModel):
 
 # Modelo rápido y económico para tareas de clasificación en segundo plano (Gemini 1M TPM o Groq)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_FAST_MODEL = os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
 

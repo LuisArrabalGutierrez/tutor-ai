@@ -70,9 +70,9 @@ tutor_tools = [buscar_apuntes_ugr, compilar_cpp, buscar_internet]
 
 # --- INICIALIZACIÓN MULTI-PROVEEDOR Y RESILIENCIA (1M TPM CON GEMINI + FALLBACK GROQ) ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
 
-GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 GROQ_FAST_MODEL = os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
