@@ -53,7 +53,7 @@ const TreeItem = ({ name, node, path, activeFile, onSelectFile, level }: any) =>
         ) : (
           <FileCode size={16} className={`${isActive ? 'text-blue-400' : 'text-gray-500'} shrink-0`} />
         )}
-        <span className="text-[13px] truncate font-medium">{name}</span>
+        <span className="text-[13px] truncate font-medium" title={name}>{name}</span>
       </div>
 
       {isFolder && isOpen && (
