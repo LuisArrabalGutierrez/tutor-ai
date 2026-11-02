@@ -38,11 +38,13 @@ async def websocket_terminal(websocket: WebSocket):
         if slave_fd > 2:
             os.close(slave_fd)
 
-        # Lanzar bash interactivo dentro del sandbox seguro de Docker
+        # Lanzar bash interactivo dentro del sandbox seguro de Docker sin permisos root (UID 1000)
         os.execvp("docker", [
             "docker", "run", "-it", "--rm",
             "--name", container_name,
-            "--user", "alumno",
+            "--user", "1000:1000",
+            "-w", "/home/alumno",
+            "-e", "HOME=/home/alumno",
             "--pids-limit", "100",
             "--memory", "512m",
             "tutor-ugr-image", "bash"
