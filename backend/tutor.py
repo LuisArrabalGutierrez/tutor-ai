@@ -14,7 +14,7 @@ try:
 except ImportError:
     ChatGoogleGenerativeAI = None
 
-from services.search import search_theory_logic
+from services.search import search_theory_logic, async_search_theory_logic
 from services.compiler import compile_and_run_project
 
 load_dotenv()
@@ -25,13 +25,13 @@ _current_project_context: ContextVar[Dict[str, str]] = ContextVar("current_proje
 # --- HERRAMIENTAS DIRECTAS EN MEMORIA (0ms cold-start, sin subprocesos IPC) ---
 
 @tool
-def buscar_apuntes_ugr(pregunta: str) -> str:
+async def buscar_apuntes_ugr(pregunta: str) -> str:
     """
     Busca en la base de datos de apuntes oficiales de la UGR mediante pgvector.
     USO OBLIGATORIO: Cuando el alumno pregunta teoría, temario o conceptos de C++ o Linux.
     NO USAR para saludos ni para corregir código sin dudas teóricas.
     """
-    return search_theory_logic(pregunta)
+    return await async_search_theory_logic(pregunta)
 
 @tool
 async def compilar_cpp() -> str:

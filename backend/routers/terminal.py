@@ -1,7 +1,15 @@
 import asyncio
 import os
 import pty
+import json
+import fcntl
+import termios
+import struct
+import signal
+import uuid
+import subprocess
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from starlette.websockets import WebSocketState
 
 router = APIRouter()
 
@@ -9,67 +17,162 @@ router = APIRouter()
 @router.websocket("/ws/terminal")
 async def websocket_terminal(websocket: WebSocket):
     await websocket.accept()
-    
+
+    # Identificador único de contenedor para garantizar aislamiento y cierre limpio
+    container_name = f"tutor_term_{uuid.uuid4().hex[:12]}"
+    loop = asyncio.get_running_loop()
+
     # Creamos una Pseudo-Terminal (PTY) de Linux
     master_fd, slave_fd = pty.openpty()
 
-    # Hijo del proceso para lanzar Bash
     pid = os.fork()
     if pid == 0:
-
-        # --- PROCESO HIJO (El Bash Real) ---
+        # --- PROCESO HIJO (El Bash en Docker) ---
         os.setsid()
-        os.dup2(slave_fd, 0) # Conectar Entrada
-        os.dup2(slave_fd, 1) # Conectar Salida
-        os.dup2(slave_fd, 2) # Conectar Errores
-        
-        if master_fd > 2: os.close(master_fd)
-        if slave_fd > 2: os.close(slave_fd)
-        
-        # bash interactivo para trabajar con las ordenes
-        # docker run: lanza un contenedor
-        # -it: modo interactivo con terminal (para que xterm.js pille colores y teclas)
-        # --rm: destruye el contenedor automáticamente cuando el alumno sale
-        # ubuntu: la imagen base (se puede cambiar por debian, alpine, etc.)
-        # bash: el programa a ejecutar
-        os.execvp("docker", ["docker", "run", "-it", "--rm", "tutor-ugr-image", "bash"])
+        os.dup2(slave_fd, 0)  # Entrada estándar
+        os.dup2(slave_fd, 1)  # Salida estándar
+        os.dup2(slave_fd, 2)  # Error estándar
+
+        if master_fd > 2:
+            os.close(master_fd)
+        if slave_fd > 2:
+            os.close(slave_fd)
+
+        # Lanzar bash interactivo dentro del sandbox seguro de Docker
+        os.execvp("docker", [
+            "docker", "run", "-it", "--rm",
+            "--name", container_name,
+            "--user", "alumno",
+            "--pids-limit", "100",
+            "--memory", "512m",
+            "tutor-ugr-image", "bash"
+        ])
+
     # --- PROCESO PADRE (FastAPI) ---
     os.close(slave_fd)
+    websocket.state.pid = pid
 
-    # Tarea para LEER del Bash y mandarlo a React
+    pty_queue = asyncio.Queue()
+    is_reader_registered = False
+
+    def on_pty_readable():
+        """Callback no bloqueante ejecutado por el bucle de eventos (epoll)."""
+        try:
+            data = os.read(master_fd, 4096)
+            if not data:
+                pty_queue.put_nowait(None)  # EOF
+            else:
+                pty_queue.put_nowait(data)
+        except (OSError, ValueError):
+            pty_queue.put_nowait(None)
+
+    try:
+        loop.add_reader(master_fd, on_pty_readable)
+        is_reader_registered = True
+    except Exception as e:
+        print(f"⚠️ [Terminal] Error registrando reader en loop: {e}")
+
+    # Tarea para LEER del PTY y mandarlo al frontend por WebSocket
     async def read_from_pty():
-        loop = asyncio.get_running_loop()
         try:
             while True:
-                # Leemos lo que dice Linux
-                data = await loop.run_in_executor(None, os.read, master_fd, 4096)
-                if not data: 
+                data = await pty_queue.get()
+                if data is None:
                     break
-                # Lo mandamos por el WebSocket
-                await websocket.send_text(data.decode("utf-8", "replace"))
+                if websocket.client_state == WebSocketState.CONNECTED:
+                    await websocket.send_text(data.decode("utf-8", "replace"))
         except Exception:
             pass
 
-
-    # Tarea para ESCUCHAR a React y meterlo en Bash
+    # Tarea para ESCUCHAR del WebSocket e inyectarlo en el PTY (con soporte de resize)
     async def write_to_pty():
         try:
             while True:
                 data = await websocket.receive_text()
-                # Escribimos las teclas del alumno en Linux
-                os.write(master_fd, data.encode("utf-8"))
-        except WebSocketDisconnect:
 
+                # Soporte de mensaje de control JSON para redimensión de ventana (TIOCSWINSZ)
+                if data.startswith("{") and "resize" in data:
+                    try:
+                        msg = json.loads(data)
+                        if msg.get("type") == "resize":
+                            cols = int(msg.get("cols", 80))
+                            rows = int(msg.get("rows", 24))
+                            winsize = struct.pack("HHHH", rows, cols, 0, 0)
+                            fcntl.ioctl(master_fd, termios.TIOCSWINSZ, winsize)
+                            continue
+                    except Exception:
+                        pass
+
+                # Escritura de teclas / comandos del alumno en Linux
+                os.write(master_fd, data.encode("utf-8"))
+        except (WebSocketDisconnect, Exception):
             pass
 
+    try:
+        task1 = asyncio.create_task(read_from_pty())
+        task2 = asyncio.create_task(write_to_pty())
 
-    # Ejecutamos ambas tareas a la vez
-    task1 = asyncio.create_task(read_from_pty())
-    task2 = asyncio.create_task(write_to_pty())
+        # Esperamos a que el alumno cierre la conexión, escriba 'exit' o se desconecte
+        done, pending = await asyncio.wait([task1, task2], return_when=asyncio.FIRST_COMPLETED)
+        for task in pending:
+            task.cancel()
 
-    # Esperamos a que el alumno cierre la pestaña o escriba 'exit'
-    done, pending = await asyncio.wait([task1, task2], return_when=asyncio.FIRST_COMPLETED)
-    for task in pending: 
-        task.cancel()
-    
-    os.close(master_fd)
+    finally:
+        # 1. Quitar el file descriptor del loop de eventos de forma segura
+        if is_reader_registered:
+            try:
+                loop.remove_reader(master_fd)
+            except Exception:
+                pass
+
+        # 2. Cerrar master_fd
+        try:
+            os.close(master_fd)
+        except OSError:
+            pass
+
+        # 3. Terminar proceso hijo y recolectarlo para EVITAR ZOMBIS (SIGTERM + waitpid)
+        child_pid = getattr(websocket.state, "pid", pid)
+        if child_pid and child_pid > 0:
+            try:
+                os.kill(child_pid, signal.SIGTERM)
+            except (ProcessLookupError, OSError):
+                pass
+
+            # Espera no bloqueante breve para dar tiempo al cierre limpio
+            try:
+                for _ in range(5):
+                    rpid, _ = os.waitpid(child_pid, os.WNOHANG)
+                    if rpid == child_pid:
+                        break
+                    await asyncio.sleep(0.05)
+                else:
+                    # Si no ha cerrado con SIGTERM, forzar SIGKILL y waitpid
+                    try:
+                        os.kill(child_pid, signal.SIGKILL)
+                    except (ProcessLookupError, OSError):
+                        pass
+                    os.waitpid(child_pid, 0)
+            except (ChildProcessError, ProcessLookupError, OSError):
+                pass
+
+        # 4. Red de seguridad estricta: destruir contenedor Docker por nombre
+        def _force_kill_docker():
+            try:
+                subprocess.run(
+                    ["docker", "rm", "-f", container_name],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=3
+                )
+            except Exception:
+                pass
+
+        await asyncio.to_thread(_force_kill_docker)
+
+        # 5. Cerrar websocket si sigue abierto
+        if websocket.client_state == WebSocketState.CONNECTED:
+            try:
+                await websocket.close()
+            except Exception:
+                pass
