@@ -27,18 +27,19 @@ export default memo(function ChatPanel({ messages, onSendMessage, onClearChat, o
   const isWaitingFirstToken = isLoading && lastMessage?.role === 'assistant' && lastMessage?.content === '';
 
   return (
-    <div className="flex flex-col h-full w-full bg-gray-950 border-l border-gray-800">
+    <div className="flex flex-col h-full w-full bg-gray-950">
       {/* Header del Chat */}
-      <div className="p-3 bg-gray-900 border-b border-gray-800 flex justify-between items-center h-[56px] shrink-0">
-        <h2 className="text-sm font-semibold text-blue-400 flex items-center gap-2">
-          <BotMessageSquare size={18} /> Tutor IA Socrático
+      <div className="px-4 py-2 bg-[#181818] border-b border-[#2d2d2d] flex justify-between items-center h-[38px] shrink-0">
+        <h2 className="text-xs font-semibold text-blue-400 flex items-center gap-2">
+          <BotMessageSquare size={15} /> Tutor Socrático
         </h2>
         <button 
           onClick={onClearChat} 
           disabled={isLoading || messages.length <= 1} 
-          className="text-gray-400 hover:text-red-400 disabled:opacity-30 transition-all text-xs flex items-center gap-1.5 px-2 py-1 rounded hover:bg-gray-800"
+          className="text-gray-400 hover:text-red-400 disabled:opacity-30 transition-all text-xs flex items-center gap-1.5 px-2 py-0.5 rounded hover:bg-gray-800"
+          title="Borrar conversación actual"
         >
-          <Trash2 size={14} /> Borrar historial
+          <Trash2 size={13} /> Borrar historial
         </button>
       </div>
       
