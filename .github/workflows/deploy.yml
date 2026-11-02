@@ -19,6 +19,10 @@ jobs:
             git reset --hard origin/main
             git pull origin main
             
+            # Construir imagen Docker segura con usuario alumno (no-root)
+            cd ~/tutor-ai/backend/docker
+            docker build -t tutor-ugr-image:latest .
+            
             # actulizar python
             cd ~/tutor-ai/backend
             [ -d venv ] || python3 -m venv venv
