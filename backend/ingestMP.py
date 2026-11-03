@@ -6,9 +6,11 @@ from google import genai
 from google.genai import types
 from pypdf import PdfReader
 from supabase import create_client
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
@@ -135,5 +137,5 @@ def procesar_carpeta(carpeta: str):
     print("\n TODOS LOS APUNTES DE MP VECTORIZADOS")
 
 if __name__ == "__main__":
-    carpeta_apuntes = "apuntes_pdf/MP" 
+    carpeta_apuntes = os.path.join(os.path.dirname(__file__), "apuntes_pdf", "MP") 
     procesar_carpeta(carpeta_apuntes)

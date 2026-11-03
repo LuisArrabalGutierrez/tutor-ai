@@ -1,5 +1,9 @@
 #!/bin/bash
-cd /home/luisarrabalgutierrez/tutor-ai/backend
+# Script de ejemplo para levantar el Backend y Ngrok con PM2 en tu servidor VPS/Cloud
+# Ajusta la ruta a la carpeta de tu backend y tu dominio estático de Ngrok
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$DIR/backend"
 source venv/bin/activate
 pm2 start "python -m uvicorn main:app --host 0.0.0.0 --port 8000" --name "backend"
-pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name "ngrok"
+pm2 start "ngrok http --domain=TU_DOMINIO_NGROK.ngrok-free.dev 8000" --name "ngrok"

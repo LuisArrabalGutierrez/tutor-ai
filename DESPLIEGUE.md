@@ -90,7 +90,7 @@ source venv/bin/activate
 pm2 start "./venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
 
 # 2. Arranque del Túnel Ngrok con dominio estático vinculado al puerto 8000
-pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name ngrok
+pm2 start "ngrok http --domain=tu-dominio.ngrok-free.dev 8000" --name ngrok
 4.2. Persistencia ante Reinicios
 Para garantizar que los servicios se restauren automáticamente si Google Cloud reinicia la máquina por mantenimiento:
 
@@ -120,7 +120,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: luisarrabalgutierrez
+          username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # 1. Sincronización del repositorio
@@ -141,7 +141,7 @@ jobs:
             
             # 4. Zero-Downtime Restart: Reinicio de servicios
             pm2 restart backend || pm2 start "./venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
-            pm2 restart ngrok || pm2 start "ngrok http --domain=lunar-finicky-concierge.ngrok-free.dev 8000" --name ngrok
+            pm2 restart ngrok || pm2 start "ngrok http --domain=${{ secrets.NGROK_DOMAIN }} 8000" --name ngrok
             
             # 5. Guardado de estado
             pm2 save
@@ -153,7 +153,7 @@ El frontend está programado para ser agnóstico a la IP real del servidor de Go
 
 En el panel de Vercel > Environment Variables, se ha configurado:
 
-VITE_GOOGLE_IP = lunar-finicky-concierge.ngrok-free.dev
+VITE_GOOGLE_IP = tu-dominio.ngrok-free.dev
 
 El código fuente lee esta variable y establece dinámicamente la conexión wss:// (WebSocket Seguro). Esto evita que navegadores como Chrome o Safari bloqueen la conexión por políticas de "Mixed Content" al intentar conectar una web segura (https) con una IP insegura (http).
 
