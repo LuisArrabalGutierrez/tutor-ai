@@ -16,7 +16,13 @@ function getSocketUrl(): string {
     return 'ws://localhost:8000/ws/terminal';
   }
 
-  const rawHost = import.meta.env.VITE_GOOGLE_IP || 'lunar-finicky-concierge.ngrok-free.dev';
+  const rawHost = import.meta.env.VITE_GOOGLE_IP?.trim() || '';
+
+  if (!rawHost) {
+    const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = typeof window !== 'undefined' && window.location.host ? window.location.host : 'localhost:8000';
+    return `${protocol}//${host}/ws/terminal`;
+  }
 
   // Si ya contiene protocolo ws:// o wss://
   if (rawHost.startsWith('wss://') || rawHost.startsWith('ws://')) {

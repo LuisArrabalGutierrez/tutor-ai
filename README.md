@@ -37,6 +37,17 @@ El sistema ha sido fortificado contra ataques comunes de alumnos y cuellos de bo
 
 ---
 
+## 📖 Puesta en Marcha y Traspaso a Nuevos Alumnos
+Si vas a continuar o modificar este proyecto desde cero con tus propias cuentas gratuitas (Supabase, Google Gemini y Groq), consulta la guía detallada:
+👉 **[Guía Completa de Traspaso y Configuración Inicial (GUIA_TRASPASO_NUEVO_ALUMNO.md)](GUIA_TRASPASO_NUEVO_ALUMNO.md)**
+
+Incluye:
+* Inicialización de la base de datos vectorial en Supabase con [`backend/supabase_setup.sql`](backend/supabase_setup.sql).
+* Script automatizado para subir los PDFs y vectorizar los apuntes con un solo comando: `python backend/setup_rag.py`.
+* Plantillas de variables de entorno listas en `backend/.env.example` y `frontend/.env.example`.
+
+---
+
 ## ⚙️ Guía de Instalación Rápida
 
 ### Prerrequisitos

@@ -88,7 +88,8 @@ def search_theory_logic(pregunta: str) -> str:
         tema_mejor_limpio = tema_mejor[:-4] if tema_mejor.lower().endswith('.pdf') else tema_mejor
         nombre_archivo_url = urllib.parse.quote(f"{tema_mejor_limpio}.pdf")
         
-        BASE_URL_STORAGE = "https://osalgrcicglnpajcocyt.supabase.co/storage/v1/object/public/apuntes"
+        base_supabase = (SUPABASE_URL or "").rstrip("/")
+        BASE_URL_STORAGE = f"{base_supabase}/storage/v1/object/public/apuntes"
         url_pdf = f"{BASE_URL_STORAGE}/{nombre_archivo_url}#page={diap_mejor}"
         
         # Enlace estricto en la primera línea para renderizado directo en React
