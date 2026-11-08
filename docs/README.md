@@ -143,6 +143,7 @@ El detalle de cada nodo está en la sección 6.4.9 de [`docs/EXPLICACION.md`](do
 | Terminal Linux | Un contenedor nuevo por conexión: `--network none`, `--cap-drop ALL`, `--cpus 1`, `--memory 512m`, `--pids-limit 100`, `--user 1000:1000`; máximo 10 terminales a la vez (`MAX_TERMINALS`); limpieza sin procesos zombi (`SIGTERM`, `SIGKILL`, `waitpid`, `docker rm -f`) | `routers/terminal.py` |
 | Anti-abuso | SlowAPI por alumno (token JWT, si no IP real): chat **15/min**, ejecución **30/min**. La terminal no se limita a propósito para que los alumnos puedan probar | `services/rate_limit.py` |
 | No bloquear el servidor | La compilación usa `asyncio.create_subprocess_exec`; la API sigue respondiendo mientras un alumno ejecuta código | `services/compiler.py` |
+| Entrada validada | Rutas de archivo relativas y sin `..`, tamaño del proyecto acotado, nombres escapados en el script, salida de un programa limitada a 64 KB | `schemas/payload.py`, `services/compiler.py` |
 | Memoria RAM | `/upload-pdf` rechaza archivos de más de 10 MB con 413 y limita las sesiones en memoria | `routers/uploadPDF.py` |
 | Datos | JWT de Supabase opcional (modo anónimo sin perfil); RLS en `perfiles`; el backend usa la clave `service_role` y solo toca `perfiles` filtrando por el usuario del token | `auth/verify.py`, `supabase_setup.sql` |
 | Guardrails del tutor | Detección de prompt injection, HTML a Markdown, solo el enlace oficial a los apuntes, cita obligatoria si se consultaron los apuntes, y control de fuga de solución (heurística, juez LLM, una reescritura socrática y mensaje seguro de último recurso) | `guardrails.py`, `tutor_graph.py` |
@@ -206,6 +207,7 @@ pytest tests/ -m llm -v           # chat real con Gemini/Groq (consume cuota)
 | `test_compile.py` | Compilación válida, error de sintaxis, Makefile, bucle infinito, aislamiento de red | Docker + imagen |
 | `test_warm_pool.py` | Contenedor reciclado sin restos del alumno anterior, `PoolBusyError`, contenedor caído recreado | Docker + imagen |
 | `test_mcp.py` | El servidor MCP expone las 3 tools, `compilar_cpp` usa el proyecto del contexto, no hay ruido en stdout | Docker + imagen |
+| `test_compiler_robustez.py` | Error de ejecución y de compilación, salida infinita cortada, rutas peligrosas, nombres con metacaracteres | Docker + imagen |
 | `test_rate_limit_execute.py` | 429 en `/api/execute` al superar el límite (compilador simulado) | Docker + imagen |
 | `test_tutor_helpers.py` | Detección de saludos (fast-path) sin falsos positivos | Nada |
 | `test_guardrails.py`, `test_tutor_graph.py` | Guardrails y grafo completo con modelos falsos (injection, juez, reescritura, fallback, cita) | Nada |

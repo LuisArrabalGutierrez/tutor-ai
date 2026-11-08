@@ -1,4 +1,3 @@
-import os
 import time
 import asyncio
 import json
@@ -43,6 +42,18 @@ async def _fetch_user_profile(user_id: str) -> dict:
         print(f"⚠️ [Chat] Error cargando perfil: {e}")
         return {}
 
+async def _update_profile_and_refresh_cache(user_id: str, historial: list, archivos: dict) -> None:
+    """Analiza al alumno en segundo plano y descarta su perfil en caché para que el siguiente mensaje ya use el nuevo."""
+    await update_student_profile(user_id, historial, archivos, supabase)
+    _PROFILE_CACHE.pop(user_id, None)
+
+
+def _schedule_profile_update(background_tasks: BackgroundTasks, user_id: str, historial: list, archivos: dict) -> None:
+    """Análisis pedagógico con debounce: en el 2.º mensaje del historial y después cada 3."""
+    if user_id and len(historial) >= 2 and (len(historial) % 3 == 0 or len(historial) == 2):
+        background_tasks.add_task(_update_profile_and_refresh_cache, user_id, historial, archivos)
+
+
 @router.post("/chat")
 @limiter.limit(CHAT_LIMIT)
 async def chat_endpoint(
@@ -64,15 +75,7 @@ async def chat_endpoint(
             perfil_alumno=datos_perfil
         )
 
-        # Análisis pedagógico en background con debounce (cada 3 interacciones o en la 2ª)
-        if user_id and len(historial_dict) >= 2 and (len(historial_dict) % 3 == 0 or len(historial_dict) == 2):
-            background_tasks.add_task(
-                update_student_profile, 
-                user_id, 
-                historial_dict, 
-                body.archivos,
-                supabase
-            )
+        _schedule_profile_update(background_tasks, user_id, historial_dict, body.archivos or {})
 
         return {"reply": respuesta}
         
@@ -98,15 +101,7 @@ async def chat_stream_endpoint(
     historial_dict = [m.model_dump() for m in body.historial]
     datos_perfil = await _fetch_user_profile(user_id) if user_id else {}
 
-    # Análisis pedagógico en background con debounce (cada 3 interacciones o en la 2ª)
-    if user_id and len(historial_dict) >= 2 and (len(historial_dict) % 3 == 0 or len(historial_dict) == 2):
-        background_tasks.add_task(
-            update_student_profile, 
-            user_id, 
-            historial_dict, 
-            body.archivos,
-            supabase
-        )
+    _schedule_profile_update(background_tasks, user_id, historial_dict, body.archivos or {})
 
     async def event_generator():
         try:

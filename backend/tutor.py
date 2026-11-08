@@ -27,6 +27,7 @@ load_dotenv()
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 MCP_SERVER_PATH = os.path.join(BACKEND_DIR, "mcp", "mcp_server.py")
 MCP_RETRY_AFTER_S = 60
+MAX_TOOL_OUTPUT_CHARS = 4000
 
 # ContextVar: proyecto del alumno de la petición en curso. El LLM no lo ve ni lo puede inventar;
 # el adaptador de compilar_cpp lo inyecta como argumento de la herramienta MCP.
@@ -127,7 +128,9 @@ def _adapt_tools(mcp_tools: list) -> list:
             if not archivos:
                 return "Error: No hay archivos de código en el proyecto actual."
             try:
-                return _extract_text_content(await _mcp_tool.ainvoke({"archivos": archivos}))
+                salida = _extract_text_content(await _mcp_tool.ainvoke({"archivos": archivos}))
+                # El LLM solo necesita el principio del error; el resto gasta tokens
+                return salida if len(salida) <= MAX_TOOL_OUTPUT_CHARS else salida[:MAX_TOOL_OUTPUT_CHARS] + "\n[...salida recortada]"
             except Exception as e:
                 return f"Error en sandbox de compilación: {str(e)}"
 

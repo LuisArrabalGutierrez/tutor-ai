@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import type { Message, Asignatura, ChatPayload } from '../types/index.ts';
 import { sendMessageStreamToBackend } from '../services/api';
 
+const CHAT_TIMEOUT_MS = 90000;
+
 export function useChat(projectFiles: Record<string, string>) {
   const [messages, setMessages] = useState<Message[]>([
     { id: '1', role: 'assistant', content: '¡Hola! Soy tu tutor de la UGR. ¿En qué te ayudo?', timestamp: Date.now() }
@@ -24,8 +26,8 @@ export function useChat(projectFiles: Record<string, string>) {
     const controller = new AbortController();
     abortControllerRef.current = controller;
     
-    // Timeout de seguridad de 45 segundos
-    const timeoutId = setTimeout(() => controller.abort('TIMEOUT'), 45000);
+    // Timeout de seguridad: el backend puede encadenar herramientas, juez y reescritura de los guardrails
+    const timeoutId = setTimeout(() => controller.abort('TIMEOUT'), CHAT_TIMEOUT_MS);
 
     try {
       const payload: ChatPayload = {

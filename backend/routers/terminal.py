@@ -29,7 +29,6 @@ async def websocket_terminal(websocket: WebSocket):
         )
         await websocket.close(code=1013)
         return
-    _active_terminals += 1
 
     # Identificador único de contenedor para garantizar aislamiento y cierre limpio
     container_name = f"tutor_term_{uuid.uuid4().hex[:12]}"
@@ -52,19 +51,23 @@ async def websocket_terminal(websocket: WebSocket):
             os.close(slave_fd)
 
         # Lanzar bash interactivo dentro del sandbox seguro de Docker sin permisos root (UID 1000)
-        os.execvp("docker", [
-            "docker", "run", "-it", "--rm",
-            "--name", container_name,
-            "--network", "none",
-            "--cap-drop", "ALL",
-            "--cpus", "1",
-            "--user", "1000:1000",
-            "-w", "/home/alumno",
-            "-e", "HOME=/home/alumno",
-            "--pids-limit", "100",
-            "--memory", "512m",
-            "tutor-ugr-image", "bash"
-        ])
+        try:
+            os.execvp("docker", [
+                "docker", "run", "-it", "--rm",
+                "--name", container_name,
+                "--network", "none",
+                "--cap-drop", "ALL",
+                "--cpus", "1",
+                "--user", "1000:1000",
+                "-w", "/home/alumno",
+                "-e", "HOME=/home/alumno",
+                "--pids-limit", "100",
+                "--memory", "512m",
+                "tutor-ugr-image", "bash"
+            ])
+        except BaseException:
+            # Si docker no arranca, el hijo (copia de la API) no debe seguir ejecutando código de la API
+            os._exit(127)
 
     # --- PROCESO PADRE (FastAPI) ---
     os.close(slave_fd)
@@ -126,6 +129,7 @@ async def websocket_terminal(websocket: WebSocket):
         except (WebSocketDisconnect, Exception):
             pass
 
+    _active_terminals += 1
     try:
         task1 = asyncio.create_task(read_from_pty())
         task2 = asyncio.create_task(write_to_pty())
