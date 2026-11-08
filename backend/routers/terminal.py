@@ -13,10 +13,23 @@ from starlette.websockets import WebSocketState
 
 router = APIRouter()
 
+# Tope de terminales simultáneas: cada una reserva hasta 512 MB en la VM
+MAX_TERMINALS = int(os.getenv("MAX_TERMINALS", "10"))
+_active_terminals = 0
+
 
 @router.websocket("/ws/terminal")
 async def websocket_terminal(websocket: WebSocket):
+    global _active_terminals
     await websocket.accept()
+
+    if _active_terminals >= MAX_TERMINALS:
+        await websocket.send_text(
+            "\r\n\x1b[33m[Hay demasiadas terminales abiertas ahora mismo. Inténtalo de nuevo en un minuto.]\x1b[0m\r\n"
+        )
+        await websocket.close(code=1013)
+        return
+    _active_terminals += 1
 
     # Identificador único de contenedor para garantizar aislamiento y cierre limpio
     container_name = f"tutor_term_{uuid.uuid4().hex[:12]}"
@@ -42,6 +55,9 @@ async def websocket_terminal(websocket: WebSocket):
         os.execvp("docker", [
             "docker", "run", "-it", "--rm",
             "--name", container_name,
+            "--network", "none",
+            "--cap-drop", "ALL",
+            "--cpus", "1",
             "--user", "1000:1000",
             "-w", "/home/alumno",
             "-e", "HOME=/home/alumno",
@@ -120,6 +136,8 @@ async def websocket_terminal(websocket: WebSocket):
             task.cancel()
 
     finally:
+        _active_terminals -= 1
+
         # 1. Quitar el file descriptor del loop de eventos de forma segura
         if is_reader_registered:
             try:
