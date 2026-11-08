@@ -59,7 +59,10 @@ Instrucciones:
 
     try:
         response = await analyst_llm.ainvoke(prompt)
-        content = response.content.strip()
+        content = response.content
+        if isinstance(content, list):  # Gemini puede devolver una lista de bloques [{"type": "text", "text": ...}]
+            content = "".join(b if isinstance(b, str) else b.get("text", "") for b in content)
+        content = content.strip()
 
         # Extracción robusta de JSON mediante expresión regular
         match = re.search(r'\{.*\}', content, re.DOTALL)

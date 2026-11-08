@@ -1,7 +1,6 @@
 import os
 import io
 import asyncio
-import numpy as np
 from pypdf import PdfReader
 import traceback
 from fastapi import APIRouter, UploadFile, File, Header
@@ -82,7 +81,7 @@ async def upload_personal_pdf(
                 
                 memoria_usuarios[x_session_id].append({
                     "texto": bloque,
-                    "vector": np.array(result.embeddings[0].values)
+                    "vector": list(result.embeddings[0].values)
                 })
                 bloques_procesados += 1
                 

@@ -66,6 +66,8 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Si falla algún paso (p. ej. pip) se corta aquí y el backend sigue con la versión anterior
+            set -e
             cd ~/tutor-ai
             git reset --hard origin/main
             git pull origin main
