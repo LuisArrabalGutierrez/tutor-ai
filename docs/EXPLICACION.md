@@ -429,12 +429,12 @@ El chat ocupa un panel derecho de 380 a 460 px que se puede ocultar.
 
 **`useTerminal`.** `handleRunCode` llama a `executeCodeBackend(projectFiles)` y pinta `output` en la consola, en rojo si `isError`.
 
-**`useChat`.** Historial en estado de React (no persiste: recargar la página lo borra). Al enviar crea el mensaje del alumno y un mensaje vacío del asistente que se rellena token a token. Usa `AbortController` con dos motivos: `MANUAL_STOP` (botón "Detener generación") y `TIMEOUT` (45 s). Si hay error, elimina el placeholder vacío y añade un mensaje de rol `system`.
+**`useChat`.** Historial en estado de React (no persiste: recargar la página lo borra). Al enviar crea el mensaje del alumno y un mensaje vacío del asistente que se rellena token a token. Usa `AbortController` con dos motivos: `MANUAL_STOP` (botón "Detener generación") y `TIMEOUT` (90 s). Si hay error, elimina el placeholder vacío y añade un mensaje de rol `system`.
 
 **`services/api.ts`.**
 - `API_URL`: si el host es `localhost`/`127.0.0.1` usa `VITE_API_URL`; en producción usa `''` (ruta relativa, que resuelve el rewrite de `vercel.json`).
 - `sendMessageStreamToBackend`: añade `Authorization` si hay sesión de Supabase, hace `POST /api/chat/stream`, lee el cuerpo con `getReader()`, parte por `\n\n`, interpreta `data: {token}`, `data: {error}` y `data: [DONE]`. Si la respuesta no es OK cae de forma transparente a `sendMessageToBackend` (`POST /api/chat`).
-- `executeCodeBackend`: `POST /api/execute` con timeout de 15 s; en error devuelve un `ExecuteResponse` sintético con `isError: true`.
+- `executeCodeBackend`: `POST /api/execute` con timeout de 90 s; en error devuelve un `ExecuteResponse` sintético con `isError: true`.
 
 **`LinuxTerminal`.** Calcula la URL del WebSocket: local `ws://localhost:8000/ws/terminal`; en producción usa `VITE_GOOGLE_IP` normalizado a `wss://<host>/ws/terminal`. Envía las teclas tal cual y los cambios de tamaño como `{"type":"resize","cols","rows"}` (FitAddon + ResizeObserver). Recibe texto y lo escribe en xterm.
 
@@ -566,7 +566,7 @@ Cada conexión crea un contenedor nuevo y aislado. No usa el Warm Pool. Si ya ha
 - **Qué.** `update_student_profile` toma solo el último mensaje del alumno (mínimo 5 caracteres) y pide a un LLM rápido (Gemini si hay clave, si no Groq) un JSON `{"carencia": "...", "fortaleza": "..."}` de 5 palabras como máximo cada campo.
 - **Parseo.** Extrae el JSON con la expresión regular `\{.*\}` (los modelos a veces lo envuelven en Markdown). Si ambos campos son "Ninguna detectada" no escribe nada, para no pisar el perfil.
 - **Escritura.** `UPDATE perfiles SET carencias/fortalezas WHERE id = user_id` en un hilo, con la clave `service_role`. Es necesaria porque la política RLS solo permite al propio usuario actualizar su fila y el backend no actúa como ese usuario.
-- **Efecto.** El perfil actualizado entra en el siguiente `SystemMessage`, pero con hasta 5 min de retraso por la caché de perfil. Si la tarea falla solo imprime un aviso. No afecta a la latencia del chat porque `BackgroundTasks` corre después de responder.
+- **Efecto.** El perfil actualizado entra en el siguiente `SystemMessage`, y `chat.py` descarta el perfil en caché tras actualizarlo, así que el siguiente mensaje ya lo usa. Si la tarea falla solo imprime un aviso. No afecta a la latencia del chat porque `BackgroundTasks` corre después de responder.
 
 #### 6.4.6. Autenticación y seguridad de datos
 
@@ -738,7 +738,7 @@ Lista basada en lectura de código, no en ejecución. Cada punto indica archivo 
 20. **[RESUELTO 2026-11-08]** **`ingestMP.py` e `ingestFS.py` importan `pypdf`, pero `requirements.txt` solo lista `PyPDF2`.** En un entorno limpio, `setup_rag.py` fallará en esas dos asignaturas. Unificar en una de las dos librerías. Corrección: todo el backend usa `pypdf`; `PyPDF2` salió de `requirements.txt`, donde ahora también está `langgraph` (se importaba sin estar declarado).
 21. **`match_apuntes` no filtra por asignatura.** Una duda de Linux puede devolver diapositivas de C++ y al revés. Añadir un parámetro `asignatura` y pasarlo desde `buscar_apuntes_ugr` según la asignatura activa.
 22. **[RESUELTO 2026-11-08]** **Los enlaces del tutor pueden salir mal formateados** (documentado en la memoria, figura 5.4: el modelo devolvió HTML `<a href>` en vez de Markdown, y a veces inventa enlaces a `apuntes.ugr.es`). La memoria propone post-procesar la respuesta en el backend. Prompt sin HTML ni URLs inventadas, y el frontend normaliza `<a href>` a Markdown, pinta como cita oficial solo los enlaces al bucket de apuntes y marca el resto como externos (`frontend/src/lib/tutorLinks.ts`).
-23. **Perfilado con retraso y poca señal.** Solo analiza el último mensaje, con 5 min de caché de perfil por medio, y sobrescribe `carencias` y `fortalezas` con un texto de 5 palabras (no acumula histórico).
+23. **Perfilado con retraso y poca señal.** Solo analiza el último mensaje (la caché de perfil ya se descarta tras cada actualización) y sobrescribe `carencias` y `fortalezas` con un texto de 5 palabras (no acumula histórico).
 24. **El registro por email no existe en la interfaz** y los errores de login solo van a `console.error` (el alumno no ve nada si falla la contraseña).
 25. **`useChat` no limita el tamaño del payload.** Se envía todo el historial y todos los archivos en cada mensaje; la poda ocurre en el servidor, después de transferirlos.
 

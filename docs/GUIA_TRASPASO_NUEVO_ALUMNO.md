@@ -30,7 +30,7 @@ Para que el proyecto funcione en tu ordenador o servidor, solo necesitas registr
 
 1. Crea una cuenta y un nuevo proyecto gratuito en [Supabase](https://supabase.com).
 2. En el menú lateral izquierdo de tu proyecto, entra en **SQL Editor** > **New Query**.
-3. Abre el archivo [`backend/supabase_setup.sql`](file:///home/luis/Escritorio/clase/TFG/tutor-ai/backend/supabase_setup.sql) de este repositorio, copia todo su contenido, pégalo en el editor SQL de Supabase y pulsa **Run**.
+3. Abre el archivo [`backend/supabase_setup.sql`](../backend/supabase_setup.sql) de este repositorio, copia todo su contenido, pégalo en el editor SQL de Supabase y pulsa **Run**.
    * Esto activará la extensión `pgvector`.
    * Creará la tabla `apuntes` con índice HNSW optimizado.
    * Creará la función almacenada `match_apuntes` para la búsqueda semántica.
@@ -128,6 +128,10 @@ uvicorn main:app --reload --port 8000
 ```
 La API estará disponible en `http://localhost:8000` (documentación Swagger interactiva en `http://localhost:8000/docs`).
 
+Al arrancar, la API lanza por sí sola el servidor de herramientas del tutor (`backend/mcp/mcp_server.py`, protocolo MCP) como proceso hijo y crea sus dos contenedores propios; tarda unos segundos y no hay que arrancarlo a mano. En el panel de Docker verás `tutor_warm_0..2` (compilación desde `/api/execute`) y `tutor_mcp_0..1` (compilación pedida por el tutor).
+
+Variables opcionales en `backend/.env` (hay valores por defecto): `MCP_POOL_SIZE`, `MAX_TERMINALS`, `TUTOR_GRAPH` y `GUARD_MAX_CODE_LINES`. Se explican en `backend/.env.example`.
+
 ### 3. Iniciar el Frontend
 En otra terminal:
 ```bash
@@ -145,16 +149,21 @@ Para comprobar que todo el sistema (compilador C++, seguridad de Docker, RAG de 
 
 ```bash
 cd backend
-pytest tests/ -v
+pytest tests/ -m "not llm" -v
 ```
-Todos los tests (13/13) deben finalizar en verde (`PASSED`).
+Todos deben finalizar en verde (`PASSED`). Necesitan Docker en marcha y la imagen `tutor-ugr-image` construida. Los tests que llaman a Gemini y Groq de verdad (marcados `llm`) consumen cuota y se ejecutan aparte:
+
+```bash
+pytest tests/ -m llm -v
+```
+Si el backend no encuentra `pypdf` u otra librería, el entorno virtual está desactualizado: vuelve a ejecutar `pip install -r requirements.txt` en el entorno que uses y quédate con uno solo (`backend/venv` o `venv` en la raíz).
 
 ---
 
 ## ☁️ 6. Despliegue en Servidor (Opcional)
 
 Si deseas desplegar el backend en un servidor propio (Google Cloud Compute Engine, Hetzner, AWS EC2, DigitalOcean, etc.) y el frontend en Vercel:
-* Consulta la guía completa de producción en [`DESPLIEGUE.md`](file:///home/luis/Escritorio/clase/TFG/tutor-ai/DESPLIEGUE.md).
+* Consulta la guía completa de producción en [`DESPLIEGUE.md`](DESPLIEGUE.md).
 * Si utilizas GitHub Actions para CI/CD continuo, configura los secretos del repositorio en *Settings > Secrets and variables > Actions*:
   * `SSH_HOST`: IP de tu servidor.
   * `SSH_USER`: Tu usuario SSH en la máquina remota.

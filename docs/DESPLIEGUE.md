@@ -47,7 +47,7 @@ Para que el alumno (ej. "el alumno de Cuenca") pueda ejecutar comandos sin poner
 Ruta: backend/docker/Dockerfile
 
 Dockerfile
-FROM ubuntu:24.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Madrid
@@ -73,6 +73,16 @@ Bash
 cd ~/tutor-ai/backend/docker
 docker build -t tutor-ugr-image:latest .
 Esta imagen se queda en caché en el servidor, permitiendo que las nuevas terminales de los alumnos se lancen en milisegundos.
+
+3.3. Contenedores que crea la aplicación
+La API crea y destruye estos contenedores sola; no hay que lanzarlos a mano:
+
+Nombre | Cuántos | Para qué | Límites
+tutor_warm_0..2 | 3 | Compilar desde /api/execute. Cada uno se destruye y se recrea tras usarse | sin red, 256 MB (sin swap), 0,5 CPU, 64 procesos, sin capabilities, usuario alumno
+tutor_mcp_0..1 | 2 (MCP_POOL_SIZE) | Compilar cuando lo pide el tutor por MCP. Los crea el servidor MCP, un proceso hijo de la API | los mismos
+tutor_term_<id> | 1 por terminal abierta, máx. 10 (MAX_TERMINALS) | Terminal Linux interactiva | sin red, 512 MB, 1 CPU, 100 procesos, sin capabilities, usuario 1000:1000
+
+Con la API parada no debe quedar ningún contenedor tutor_*; si la API muere de golpe, el siguiente arranque elimina los huérfanos por nombre. En una VM pequeña, el consumo de memoria de estos contenedores es bajo mientras están inactivos, pero cada terminal abierta puede llegar a 512 MB: ajusta MAX_TERMINALS y MCP_POOL_SIZE según la RAM disponible.
 
 4. Gestión de Red y Alta Disponibilidad (PM2 + Ngrok)
 Para que el sistema sea autónomo y no dependa de terminales SSH abiertas, se implementó PM2. Además, se utilizó Ngrok con un dominio estático para asegurar que la URL del servidor nunca cambie y posea certificado WSS (WebSocket Secure).
@@ -100,53 +110,38 @@ pm2 startup
 (Se debe ejecutar el comando sudo env PATH... que devuelve PM2 para registrar el demonio en el sistema operativo).
 
 5. Automatización Continua (CI/CD con GitHub Actions)
-El despliegue desde el entorno de desarrollo a producción es 100% automático. Se configuró un workflow en GitHub Actions que reacciona a cada git push en la rama main.
+El flujo está en .github/workflows/deploy.yml y tiene tres trabajos:
 
-5.1. Archivo deploy.yml
-Ruta: .github/workflows/deploy.yml
+backend-tests: en cada push y pull request a main instala las dependencias de backend/requirements.txt, construye la imagen del sandbox y ejecuta pytest tests/ -m "not llm".
+frontend-checks: ejecuta npm ci, npm run lint y npm run build en frontend/.
+deploy: solo en un push a main y solo si los dos anteriores pasan, entra por SSH en la VM y despliega.
 
-YAML
-name: Deploy Backend
+Los tests marcados llm (chat real con Gemini y Groq) no se ejecutan en la CI porque necesitan claves y consumen cuota.
 
-on:
-  push:
-    branches: [ main ]
+5.1. Script de despliegue (trabajo deploy)
+Secretos necesarios en GitHub (Settings > Secrets and variables > Actions): SSH_HOST, SSH_USER, SSH_PRIVATE_KEY y NGROK_DOMAIN.
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # 1. Sincronización del repositorio
-            cd ~/tutor-ai
-            git reset --hard origin/main
-            git pull origin main
-            
-            # 2. Actualización de la imagen Docker (Caché inteligente)
-            cd backend/docker
-            docker build -t tutor-ugr-image:latest .
-            
-            # 3. Instalación de nuevas dependencias Backend
-            cd ~/tutor-ai/backend
-            [ -d venv ] || python3 -m venv venv
-            source venv/bin/activate
-            pip install --upgrade pip
-            pip install -r requirements.txt
-            
-            # 4. Zero-Downtime Restart: Reinicio de servicios
-            pm2 restart backend || pm2 start "./venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
-            pm2 restart ngrok || pm2 start "ngrok http --domain=${{ secrets.NGROK_DOMAIN }} 8000" --name ngrok
-            
-            # 5. Guardado de estado
-            pm2 save
-            exit 0
-Estrategia adoptada: El script está diseñado de forma idempotente (usando ||); si los procesos existen, los reinicia ordenadamente; si el servidor es nuevo o los procesos murieron, los crea desde cero.
+Bash
+cd ~/tutor-ai
+git reset --hard origin/main
+git pull origin main
+
+# Reconstruir la imagen del sandbox
+cd backend/docker && docker build -t tutor-ugr-image:latest .
+
+# Dependencias del backend (versiones fijadas en requirements.txt)
+cd ~/tutor-ai/backend
+[ -d venv ] || python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Reiniciar servicios
+pm2 restart backend || pm2 start "./venv/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port 8000" --name backend
+pm2 restart ngrok || pm2 start "ngrok http --domain=$NGROK_DOMAIN 8000" --name ngrok
+pm2 save
+
+Estrategia adoptada: el script es idempotente (usa ||); si los procesos existen, los reinicia ordenadamente; si el servidor es nuevo o los procesos murieron, los crea desde cero. Al reiniciar el backend, la API vuelve a lanzar el servidor MCP y los pools de contenedores.
 
 6. Configuración del Frontend (Vercel)
 El frontend está programado para ser agnóstico a la IP real del servidor de Google Cloud.
