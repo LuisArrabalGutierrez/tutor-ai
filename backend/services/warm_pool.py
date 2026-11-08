@@ -67,11 +67,10 @@ class WarmPoolManager:
     async def start_pool(self) -> None:
         _log(f" Iniciando Warm Pool '{self.prefix}*' con {self.pool_size} contenedores...")
         self.queue = asyncio.Queue()
+        # Los contenedores se crean a la vez; get_container() ya comprueba que cada uno está vivo
+        await asyncio.gather(*(self._create(name) for name in self.containers))
         for name in self.containers:
-            await self._create(name)
             await self.queue.put(name)
-        # Pausa para estabilizar
-        await asyncio.sleep(1.5)
         _log(f" Warm Pool '{self.prefix}*' listo.")
 
     async def stop_pool(self) -> None:

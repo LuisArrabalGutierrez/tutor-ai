@@ -15,6 +15,8 @@ from langgraph.prebuilt import create_react_agent
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.tools import load_mcp_tools
 
+from tutor_graph import build_tutor_graph
+
 try:
     from langchain_google_genai import ChatGoogleGenerativeAI
 except ImportError:
@@ -25,6 +27,7 @@ load_dotenv()
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 MCP_SERVER_PATH = os.path.join(BACKEND_DIR, "mcp", "mcp_server.py")
 MCP_RETRY_AFTER_S = 60
+MAX_TOOL_OUTPUT_CHARS = 4000
 
 # ContextVar: proyecto del alumno de la petición en curso. El LLM no lo ve ni lo puede inventar;
 # el adaptador de compilar_cpp lo inyecta como argumento de la herramienta MCP.
@@ -86,6 +89,7 @@ class _Runtime:
         self.tools: list = []
         self.tool_names: List[str] = []
         self.mcp_ok = False
+        self.graph_mode = False
         self.started_at = 0.0
         self.ready = asyncio.Event()
         self.stop = asyncio.Event()
@@ -124,7 +128,9 @@ def _adapt_tools(mcp_tools: list) -> list:
             if not archivos:
                 return "Error: No hay archivos de código en el proyecto actual."
             try:
-                return _extract_text_content(await _mcp_tool.ainvoke({"archivos": archivos}))
+                salida = _extract_text_content(await _mcp_tool.ainvoke({"archivos": archivos}))
+                # El LLM solo necesita el principio del error; el resto gasta tokens
+                return salida if len(salida) <= MAX_TOOL_OUTPUT_CHARS else salida[:MAX_TOOL_OUTPUT_CHARS] + "\n[...salida recortada]"
             except Exception as e:
                 return f"Error en sandbox de compilación: {str(e)}"
 
@@ -132,13 +138,26 @@ def _adapt_tools(mcp_tools: list) -> list:
     return tools
 
 
+def _graph_enabled() -> bool:
+    """TUTOR_GRAPH=0 vuelve al agente prefabricado (create_react_agent), útil para comparar en las medidas."""
+    return os.getenv("TUTOR_GRAPH", "1") != "0"
+
+
 def _build_agents(rt: _Runtime, tools: list) -> None:
+    rt.graph_mode = _graph_enabled()
+
+    def _agente(llm):
+        if rt.graph_mode:
+            # El juez del guardrail usa el modelo rápido; si no hay, el propio modelo
+            return build_tutor_graph(llm, tools, judge_llm=llm_fast or llm)
+        return create_react_agent(llm, tools=tools)
+
     if llm_gemini:
-        rt.primary = create_react_agent(llm_gemini, tools=tools)
+        rt.primary = _agente(llm_gemini)
         if llm_groq:
-            rt.fallback = create_react_agent(llm_groq, tools=tools)
+            rt.fallback = _agente(llm_groq)
     elif llm_groq:
-        rt.primary = create_react_agent(llm_groq, tools=tools)
+        rt.primary = _agente(llm_groq)
 
 
 async def _mcp_runner(rt: _Runtime) -> None:
@@ -205,6 +224,46 @@ async def stop_tutor_runtime() -> None:
 async def _get_agents():
     await start_tutor_runtime()
     return _runtime.primary, _runtime.fallback
+
+
+
+STREAM_CHUNK_CHARS = 60
+
+
+def _log_guard(guard: dict) -> None:
+    """Deja en stderr qué guardrails actuaron en la petición (solo si alguno lo hizo)."""
+    activos = {k: v for k, v in guard.items() if v not in (False, 0, None) and k != "closing_question"}
+    if activos:
+        print(f"🛡️ [Guardrails] {activos}", file=sys.stderr, flush=True)
+
+
+def _agent_input(mensajes: list, asignatura: str, consulta: str) -> dict:
+    entrada = {"messages": mensajes}
+    if _runtime is not None and _runtime.graph_mode:
+        entrada.update(asignatura=asignatura, student_query=consulta)
+    return entrada
+
+
+async def _invoke_agent(agent, mensajes: list, asignatura: str, consulta: str) -> str:
+    res = await agent.ainvoke(_agent_input(mensajes, asignatura, consulta))
+    _log_guard(res.get("guard") or {})
+    return _extract_text_content(res["messages"][-1].content)
+
+
+async def _stream_agent(agent, mensajes: list, asignatura: str, consulta: str) -> AsyncGenerator[str, None]:
+    if _runtime is not None and _runtime.graph_mode:
+        # Con guardrails la respuesta se revisa completa antes de enviarla: se emite ya validada y troceada
+        texto = await _invoke_agent(agent, mensajes, asignatura, consulta)
+        for i in range(0, len(texto), STREAM_CHUNK_CHARS):
+            yield texto[i:i + STREAM_CHUNK_CHARS]
+        return
+    async for event in agent.astream_events({"messages": mensajes}, version="v2"):
+        if event.get("event") == "on_chat_model_stream":
+            chunk = event.get("data", {}).get("chunk")
+            if chunk and chunk.content:
+                texto = _extract_text_content(chunk.content)
+                if texto:
+                    yield texto
 
 
 def _extract_text_content(content) -> str:
@@ -357,16 +416,14 @@ async def get_socratic_response_async(
         # 1. Intento con Agente Primario (Gemini / 1M TPM) con las herramientas MCP
         if primary_agent:
             try:
-                respuesta = await primary_agent.ainvoke({"messages": mensajes})
-                return _extract_text_content(respuesta["messages"][-1].content)
+                return await _invoke_agent(primary_agent, mensajes, asignatura, ultima_pregunta)
             except Exception as e_primary:
                 print(f"⚠️ [Tutor Fallback a Secundario]: Error en agente primario: {e_primary}")
 
         # 2. Intento con Agente Secundario (Fallback Groq)
         if fallback_agent:
             try:
-                respuesta = await fallback_agent.ainvoke({"messages": mensajes})
-                return _extract_text_content(respuesta["messages"][-1].content)
+                return await _invoke_agent(fallback_agent, mensajes, asignatura, ultima_pregunta)
             except Exception as e_fallback:
                 print(f"⚠️ [Tutor Fallback a LLM Fast]: Error en agente secundario: {e_fallback}")
 
@@ -423,15 +480,9 @@ async def get_socratic_response_stream_async(
         # 1. Stream con Agente Primario (Gemini / 1M TPM) con las herramientas MCP
         if primary_agent:
             try:
-                async for event in primary_agent.astream_events({"messages": mensajes}, version="v2"):
-                    kind = event.get("event")
-                    if kind == "on_chat_model_stream":
-                        chunk = event.get("data", {}).get("chunk")
-                        if chunk and chunk.content:
-                            texto = _extract_text_content(chunk.content)
-                            if texto:
-                                streamed_any = True
-                                yield texto
+                async for texto in _stream_agent(primary_agent, mensajes, asignatura, ultima_pregunta):
+                    streamed_any = True
+                    yield texto
                 return
             except Exception as e_stream_primary:
                 print(f"⚠️ [Stream Primary Fallback a Secundario]: {e_stream_primary}")
@@ -439,15 +490,9 @@ async def get_socratic_response_stream_async(
         # 2. Si falló el primario sin haber emitido nada, intentar con el Secundario (Fallback Groq)
         if not streamed_any and fallback_agent:
             try:
-                async for event in fallback_agent.astream_events({"messages": mensajes}, version="v2"):
-                    kind = event.get("event")
-                    if kind == "on_chat_model_stream":
-                        chunk = event.get("data", {}).get("chunk")
-                        if chunk and chunk.content:
-                            texto = _extract_text_content(chunk.content)
-                            if texto:
-                                streamed_any = True
-                                yield texto
+                async for texto in _stream_agent(fallback_agent, mensajes, asignatura, ultima_pregunta):
+                    streamed_any = True
+                    yield texto
                 return
             except Exception as e_stream_sec:
                 print(f"⚠️ [Stream Secundario Fallback a Fast]: {e_stream_sec}")

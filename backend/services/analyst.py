@@ -2,7 +2,6 @@ import os
 import json
 import re
 import asyncio
-from typing import Optional
 from pydantic import BaseModel, Field
 from langchain_groq import ChatGroq
 from dotenv import load_dotenv
@@ -40,7 +39,7 @@ if not analyst_llm and GROQ_API_KEY:
 
 async def update_student_profile(user_id: str, messages: list, code: dict, supabase_client):
     """Analiza la última interacción del alumno para actualizar sus fortalezas y debilidades pedagógicas."""
-    if not user_id or not messages or not supabase_client:
+    if not user_id or not messages or not supabase_client or analyst_llm is None:
         return
 
     last_msg = messages[-1].get('content', '') if messages else ''

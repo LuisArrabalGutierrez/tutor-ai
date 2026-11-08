@@ -18,8 +18,8 @@ Para que el proyecto funcione en tu ordenador o servidor, solo necesitas registr
 
 | Servicio | Finalidad | Dónde obtener la clave |
 | :--- | :--- | :--- |
-| **Google AI Studio** | Generación de Embeddings RAG (`gemini-embedding-001`, 768 dimensiones) y LLM principal | [aistudio.google.com](https://aistudio.google.com) (Crear API Key) |
-| **Groq Cloud** | Motor de inferencia ultrarrápido para respuestas del tutor y análisis pedagógico | [console.groq.com](https://console.groq.com) (Sección *API Keys*) |
+| **Google AI Studio** | LLM principal del tutor (Gemini) y embeddings del RAG (`gemini-embedding-001`, 768 dimensiones) | [aistudio.google.com](https://aistudio.google.com) (Crear API Key) |
+| **Groq Cloud** | LLM de respaldo del tutor (entra si falla Gemini) y modelo rápido para el análisis pedagógico | [console.groq.com](https://console.groq.com) (Sección *API Keys*) |
 | **Supabase** | Base de datos PostgreSQL con `pgvector`, autenticación de alumnos y almacenamiento de PDFs | [supabase.com](https://supabase.com) (Crear nuevo proyecto) |
 
 ---
