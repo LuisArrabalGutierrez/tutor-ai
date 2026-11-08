@@ -19,7 +19,7 @@ flowchart LR
 
     subgraph VM["VM de Google Cloud (PM2)"]
         API["FastAPI :8000<br/>SlowAPI + auth opcional (JWT)"]
-        TUTOR["tutor.py<br/>agente ReAct (LangGraph)"]
+        TUTOR["tutor.py + tutor_graph.py<br/>grafo LangGraph con guardrails"]
         MCP["mcp/mcp_server.py<br/>servidor MCP (proceso hijo, stdio)"]
         POOLA["Warm Pool de la API<br/>tutor_warm_0..2"]
         POOLM["Warm Pool del MCP<br/>tutor_mcp_0..1"]
@@ -70,7 +70,7 @@ sequenceDiagram
         B->>L: prompt mínimo, sin herramientas
     else consulta real
         B->>T: contexto podado (8 mensajes, archivos .cpp/.h/Makefile)
-        loop bucle ReAct
+        loop nodo agent (máx. 4 pasos de herramienta)
             T->>L: razona
             opt teoría
                 T->>M: tool buscar_apuntes_ugr(pregunta)
@@ -84,7 +84,8 @@ sequenceDiagram
             end
         end
     end
-    L-->>F: tokens por SSE (data: {"token": ...})
+    T->>T: output_guard: Markdown limpio, solo enlace oficial, cita, control de fuga de solución (juez + reescritura)
+    L-->>F: texto ya validado por SSE (data: {"token": ...})
     F-->>A: Markdown renderizado (HTML del modelo normalizado, cita oficial en chip rojo)
     B-)B: tarea en segundo plano: analista actualiza `perfiles` (cada ~3 interacciones)
 ```
@@ -113,6 +114,26 @@ sequenceDiagram
 
 ---
 
+### Grafo del tutor y guardrails
+
+```mermaid
+flowchart TD
+    S([START]) --> IG["input_guard<br/>prompt injection"]
+    IG --> AG["agent<br/>LLM + herramientas MCP"]
+    AG -- "pide herramienta" --> TL["tools"]
+    TL --> AG
+    AG -- "respuesta final" --> OG["output_guard<br/>formato, enlaces, cita,<br/>sospecha de solución"]
+    OG -- "limpia" --> E([END])
+    OG -- "fuga (juez LLM)" --> RW["rewrite<br/>(una vez)"]
+    RW --> OG
+    OG -- "persiste" --> SF["safe_fallback"]
+    SF --> E
+```
+
+El detalle de cada nodo está en la sección 6.4.9 de [`docs/EXPLICACION.md`](docs/EXPLICACION.md). Con `TUTOR_GRAPH=0` se vuelve al agente ReAct prefabricado, útil para comparar con y sin guardrails.
+
+---
+
 ## Seguridad y robustez
 
 | Capa | Medida | Dónde |
@@ -124,7 +145,8 @@ sequenceDiagram
 | No bloquear el servidor | La compilación usa `asyncio.create_subprocess_exec`; la API sigue respondiendo mientras un alumno ejecuta código | `services/compiler.py` |
 | Memoria RAM | `/upload-pdf` rechaza archivos de más de 10 MB con 413 y limita las sesiones en memoria | `routers/uploadPDF.py` |
 | Datos | JWT de Supabase opcional (modo anónimo sin perfil); RLS en `perfiles`; el backend usa la clave `service_role` y solo toca `perfiles` filtrando por el usuario del token | `auth/verify.py`, `supabase_setup.sql` |
-| Enlaces del tutor | El prompt prohíbe HTML y URLs inventadas; el frontend convierte `<a href>` en Markdown, pinta como cita oficial solo los enlaces al bucket de apuntes y marca cualquier otro como externo | `tutor.py`, `frontend/src/lib/tutorLinks.ts`, `ChatMessage.tsx` |
+| Guardrails del tutor | Detección de prompt injection, HTML a Markdown, solo el enlace oficial a los apuntes, cita obligatoria si se consultaron los apuntes, y control de fuga de solución (heurística, juez LLM, una reescritura socrática y mensaje seguro de último recurso) | `guardrails.py`, `tutor_graph.py` |
+| Enlaces en el frontend | El frontend convierte `<a href>` en Markdown, pinta como cita oficial solo los enlaces al bucket de apuntes y marca cualquier otro como externo | `frontend/src/lib/tutorLinks.ts`, `ChatMessage.tsx` |
 | Resiliencia de LLM | Gemini primario, Groq de respaldo y modelo rápido como último recurso; si el servidor MCP no arranca el tutor responde sin herramientas; streaming por SSE con respaldo a `/api/chat` | `tutor.py`, `frontend/src/services/api.ts` |
 
 Limitaciones conocidas y tareas pendientes: sección 8 de [`docs/EXPLICACION.md`](docs/EXPLICACION.md).
@@ -135,7 +157,7 @@ Limitaciones conocidas y tareas pendientes: sección 8 de [`docs/EXPLICACION.md`
 
 **Frontend:** React 19, TypeScript, Vite 7, Tailwind 4, Monaco Editor, xterm.js, react-markdown, JSZip, Supabase JS.
 
-**Backend:** FastAPI + uvicorn, LangChain/LangGraph (`create_react_agent`), MCP (FastMCP + `langchain-mcp-adapters`), Gemini y Groq, Supabase (Postgres + pgvector con índice HNSW, Auth, Storage), `pypdf`, DuckDuckGo Search, SlowAPI, Docker.
+**Backend:** FastAPI + uvicorn, LangChain y LangGraph (`StateGraph` propio con guardrails), MCP (FastMCP + `langchain-mcp-adapters`), Gemini y Groq, Supabase (Postgres + pgvector con índice HNSW, Auth, Storage), `pypdf`, DuckDuckGo Search, SlowAPI, Docker.
 
 **Despliegue:** Vercel (frontend), VM de Google Cloud con PM2 y ngrok (backend y WSS). GitHub Actions ejecuta tests, lint y build antes de desplegar por SSH.
 
@@ -186,6 +208,7 @@ pytest tests/ -m llm -v           # chat real con Gemini/Groq (consume cuota)
 | `test_mcp.py` | El servidor MCP expone las 3 tools, `compilar_cpp` usa el proyecto del contexto, no hay ruido en stdout | Docker + imagen |
 | `test_rate_limit_execute.py` | 429 en `/api/execute` al superar el límite (compilador simulado) | Docker + imagen |
 | `test_tutor_helpers.py` | Detección de saludos (fast-path) sin falsos positivos | Nada |
+| `test_guardrails.py`, `test_tutor_graph.py` | Guardrails y grafo completo con modelos falsos (injection, juez, reescritura, fallback, cita) | Nada |
 | `test_archivos.py` | `/upload-pdf`: cabecera obligatoria, PDF vacío, límite de 10 MB | Docker + imagen |
 | `test_terminal.py` | El WebSocket de la terminal abre y cierra | Docker + imagen |
 | `test_ia.py`, `test_api.py` | Chat, streaming, rate limit del chat y detección de un error lógico (marcados `llm`) | Claves reales de Gemini/Groq |
@@ -197,9 +220,9 @@ pytest tests/ -m llm -v           # chat real con Gemini/Groq (consume cuota)
 ## Estructura
 
 ```
-backend/   main.py, tutor.py, routers/, services/ (warm_pool, compiler, search, analyst, rate_limit), auth/, schemas/, docker/, ingest*.py, setup_rag.py, supabase_setup.sql, tests/
+backend/   main.py, tutor.py, tutor_graph.py, guardrails.py, routers/, services/ (warm_pool, compiler, search, analyst, rate_limit), auth/, schemas/, docker/, ingest*.py, setup_rag.py, supabase_setup.sql, tests/
 frontend/  src/{App.tsx, hooks/, services/api.ts, components/{auth,chat,editor,layout}}, vercel.json
 docs/      EXPLICACION.md, GUIA_TRASPASO_NUEVO_ALUMNO.md, DESPLIEGUE.md, memoria del TFG (PDF)
 ```
 
-Las tres herramientas del tutor (`buscar_apuntes_ugr`, `compilar_cpp`, `buscar_internet`) se sirven desde `backend/mcp/mcp_server.py`. `tutor.py` solo se conecta como cliente MCP: la tool `compilar_cpp` se le ofrece al LLM sin parámetros y `tutor.py` inyecta el proyecto del alumno al llamar a la tool, de modo que el modelo no puede inventar el código.
+Las tres herramientas del tutor (`buscar_apuntes_ugr`, `compilar_cpp`, `buscar_internet`) se sirven desde `backend/mcp/mcp_server.py`. `tutor.py` solo se conecta como cliente MCP y monta el grafo de `tutor_graph.py`: la tool `compilar_cpp` se le ofrece al LLM sin parámetros y `tutor.py` inyecta el proyecto del alumno al llamar a la tool, de modo que el modelo no puede inventar el código.
