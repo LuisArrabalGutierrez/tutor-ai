@@ -6,7 +6,8 @@ const isLocal = window.location.hostname === "localhost" || window.location.host
 const isAbort = (e: unknown): boolean => e instanceof Error && e.name === 'AbortError';
 
 const API_URL = isLocal ? (import.meta.env.VITE_API_URL || 'http://localhost:8000') : '';
-const EXECUTE_TIMEOUT = 15000;
+// Debe cubrir la espera por contenedor (30 s) y la ejecución máxima del backend (60 s)
+const EXECUTE_TIMEOUT = 90000;
 
 // Envía el mensaje con Streaming (SSE) para renderizado token a token en tiempo real
 export const sendMessageStreamToBackend = async (

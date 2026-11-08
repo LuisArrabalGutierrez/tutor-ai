@@ -4,7 +4,7 @@ import asyncio
 import numpy as np
 from pypdf import PdfReader
 import traceback
-from fastapi import APIRouter, UploadFile, File, Header, HTTPException
+from fastapi import APIRouter, UploadFile, File, Header
 from fastapi.responses import JSONResponse
 from google import genai
 from google.genai import types
@@ -28,6 +28,13 @@ except Exception as e:
 # Límite máximo de sesiones en memoria RAM para evitar fugas (OOM)
 MAX_SESSIONS_IN_MEMORY = 50
 
+def _extraer_bloques(pdf_bytes: bytes) -> list:
+    """Parseo de PDF (CPU): se ejecuta en un hilo para no bloquear la API."""
+    lector = PdfReader(io.BytesIO(pdf_bytes))
+    texto = "\n".join(t for t in (p.extract_text() for p in lector.pages) if t)
+    return [b.strip() for b in texto.split("\n\n") if len(b.strip()) > 100]
+
+
 @router.post("/upload-pdf")
 async def upload_personal_pdf(
     file: UploadFile = File(...),
@@ -50,16 +57,8 @@ async def upload_personal_pdf(
         memoria_usuarios[x_session_id] = []
         
         pdf_bytes = await file.read()
-        pdf_reader = PdfReader(io.BytesIO(pdf_bytes))
-        
-        texto_completo = ""
-        for page in pdf_reader.pages:
-            texto_page = page.extract_text()
-            if texto_page:
-                texto_completo += texto_page + "\n"
-            
-        bloques = [b.strip() for b in texto_completo.split('\n\n') if len(b.strip()) > 100]
-        
+        bloques = await asyncio.to_thread(_extraer_bloques, pdf_bytes)
+
         if not bloques:
             return JSONResponse(content={"mensaje": "El PDF está vacío o es una imagen escaneada."})
 
@@ -96,6 +95,6 @@ async def upload_personal_pdf(
             
         return JSONResponse(content={"mensaje": f"PDF procesado correctamente. {bloques_procesados} bloques indexados en la sesión."})
         
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         return JSONResponse(status_code=500, content={"error": "Error interno del servidor al procesar el PDF."})
