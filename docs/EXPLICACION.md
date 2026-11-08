@@ -586,13 +586,13 @@ sequenceDiagram
     participant T as tutor.py (_mcp_runner, un task propio)
     participant M as mcp_server.py (proceso hijo)
     participant P as Warm Pool tutor_mcp_*
-    participant A as Agentes ReAct
+    participant A as Grafo del tutor (nodo tools)
 
     L->>T: start_tutor_runtime()
     T->>M: lanza python mcp_server.py (stdio, env con WARM_POOL_PREFIX=tutor_mcp_)
     M->>P: lifespan: start_pool() (2 contenedores)
     M-->>T: initialize + list_tools
-    T->>T: adapta compilar_cpp (proyecto desde ContextVar) y crea los agentes
+    T->>T: adapta compilar_cpp (proyecto desde ContextVar) y crea el grafo
     Note over T,M: la sesión se mantiene abierta mientras corre la API
     A->>M: call_tool(buscar_apuntes_ugr / compilar_cpp / buscar_internet)
     M-->>A: texto con el resultado
