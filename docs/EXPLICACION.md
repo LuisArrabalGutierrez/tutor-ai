@@ -47,8 +47,8 @@ La industria tecnológica se encuentra saturada de perfiles junior que consumen 
          ▼                         ▼
 ┌──────────────────┐     ┌──────────────────┐
 │ Inferencia LLM   │     │ Motor RAG Híbrido│
-│ - Groq / Gemini  │     │ - Supabase pgvec │
-│ - TTFT Optim.    │     │ - HNSW Indexing  │
+│ - Gemini (princ.)│     │ - Supabase pgvec │
+│ - Groq (respaldo)│     │ - HNSW Indexing  │
 └──────────────────┘     └──────────────────┘
 ```
 
@@ -57,11 +57,13 @@ La industria tecnológica se encuentra saturada de perfiles junior que consumen 
 - **Protocolos de Baja Latencia:** Implementación de WebSockets bidireccionales y Server-Sent Events (SSE) para emisión de tokens en streaming continuo, evitando sondeos periódicos (*polling*) innecesarios.
 
 ### 2.2. Aislamiento de Procesos y Sandboxing de Kernel (Docker Engine)
-- **Contención de Código No Confiable:** Ejecución de código arbitrario de usuario (C++) en contenedores efímeros completamente sellados.
+- **Contención de Código No Confiable:** Ejecución de código arbitrario de usuario (C++ y comandos de terminal) en contenedores Docker efímeros y aislados.
 - **Defensa en Profundidad a Nivel de OS:**
-  - Aislamiento total de red: `--network none` (prevención de exfiltración de credenciales y ataques DDoS salientes).
-  - Límites de recursos por control groups (`cgroups`): techo inamovible de memoria de $256\,\text{MB}$, afinidad de núcleos de CPU estricta y descarte de privilegios de kernel (`--cap-drop=ALL`).
-  - Restricción de permisos: Ejecución bajo usuarios no-root sin privilegios (`UID 10001`).
+  - **Sin internet:** `--network none` en los contenedores de compilación y en la terminal interactiva. El código del alumno no puede salir a internet ni alcanzar otros contenedores (prevención de exfiltración de credenciales y de ataques salientes).
+  - **Sin root:** el contenedor se ejecuta como el usuario sin privilegios `alumno` (UID 1000), definido con `USER alumno` en la imagen y con `--user 1000:1000` en la terminal. No hay `sudo` y se descartan todas las capabilities del kernel (`--cap-drop ALL`).
+  - **Límites de recursos por control groups (`cgroups`):** compilación con 256 MB de memoria (sin swap), 0,5 CPU y 64 procesos; terminal con 512 MB, 1 CPU y 100 procesos. La CPU se limita por cuota (`--cpus`), no por afinidad de núcleos.
+  - **Tiempo acotado:** `timeout 30` dentro del contenedor y tope de 60 s en el host.
+  - **Estado limpio:** cada contenedor del pool de compilación se destruye y se recrea tras usarse, así un alumno no hereda procesos ni archivos de otro; la terminal crea un contenedor nuevo por conexión.
 - **Orquestador de *Warm Pool*:** Patrón de precalentamiento de contenedores en reposo para eliminar la penalización del arranque en frío (*cold start latency*).
 
 ### 2.3. Orquestación Agéntica Determinista (LangGraph)
@@ -108,7 +110,7 @@ Para otorgar al artículo rigor científico y convencer a evaluadores técnicos,
 | :--- | :--- | :--- |
 | **Context Recall@K** | Proporción de consultas donde el fragmento relevante se encuentra dentro de los primeros $K$ resultados ($K \in \{1, 3, 5\}$). | $\text{Recall}@3 \ge 0.88$ |
 | **Mean Reciprocal Rank (MRR)** | Posición media del primer fragmento pertinente en el ranking de recuperación. | $\text{MRR} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}$ |
-| **Time-To-First-Token (TTFT)** | Latencia entre el envío del prompt con contexto RAG inyectado y la llegada del primer byte en streaming al cliente. | $\le 450\,\text{ms}$ con LLaMA 3.3 sobre Groq. |
+| **Time-To-First-Token (TTFT)** | Latencia entre el envío del prompt con contexto RAG inyectado y la llegada del primer byte en streaming al cliente. | Objetivo a fijar tras medir con Gemini Flash-Lite (modelo principal); medir también el respaldo de Groq (`gpt-oss-20b`). |
 | **Tool-Routing Accuracy** | Tasa de acierto del grafo al seleccionar entre compilar, buscar en apuntes o emitir respuesta directa ante 50 escenarios de prueba sintéticos. | Precisión $\ge 96\%$. |
 | **Direct Solution Suppression Rate** | Porcentaje de casos donde el guardrail socrático intercepta y reformula código funcional completo generado accidentalmente por el LLM. | $100\%$ de contención en respuestas al alumno. |
 
@@ -640,13 +642,13 @@ Este documento (secciones 1 a 4), el README y la memoria describen en parte el d
 | :--- | :--- | :--- | :--- |
 | Límites del sandbox de compilación | Memoria 256 MB, 0,5 CPU, `--pids-limit 64`, `--cap-drop=ALL`, `no-new-privileges` (memoria p. 38; secciones 2.2 y 3.2 de este documento) | **Resuelto 2026-11-08** salvo `no-new-privileges`: `warm_pool.py` vuelve a aplicar `--network none`, 256 MB (sin swap), 0,5 CPU, 64 procesos y `--cap-drop ALL`. `no-new-privileges` hace fallar el `exec` en el host de desarrollo y no se aplica | `services/warm_pool.py` |
 | Red de la terminal | "Aislamiento total de red: `--network none`" | **Resuelto 2026-11-08:** la terminal lleva `--network none`. Siguen sin aplicarse `--cap-drop ALL` ni `--cpus` en la terminal | `routers/terminal.py` |
-| UID del sandbox | `UID 10001` (sección 2.2) | `USER alumno` en la imagen (UID 1000 en Ubuntu 22.04) y `--user 1000:1000` en la terminal | `docker/Dockerfile`, `terminal.py` |
+| UID del sandbox | `UID 10001` (versión anterior de la sección 2.2) | **Corregido en la sección 2.2:** el usuario es `alumno` (UID 1000), no root, con `USER alumno` en la imagen y `--user 1000:1000` en la terminal | `docker/Dockerfile`, `terminal.py` |
 | Versión de Ubuntu | 24.04 (memoria, `DESPLIEGUE.md`) | `ubuntu:22.04` en el Dockerfile. La VM sí es 24.04 | `docker/Dockerfile` |
 | Timeout de ejecución | 3 s (sección 3.1), 5 s (README), 10 s (memoria p. 51, "timeout 10"), 60 s (memoria p. 51, "a los 60 segundos") | `timeout 30` dentro del contenedor y 60 s en `subprocess.run`. El navegador abandona a los 15 s | `compiler.py`, `api.ts` |
 | Rate limit | 5/min (memoria p. 52; el README ya está corregido) | Chat 15/min. Desde 2026-11-08 `/api/execute` tiene 30/min. La terminal no tiene límite a propósito | `services/rate_limit.py` |
 | MCP en tiempo de ejecución | El agente invoca las herramientas vía un servidor FastMCP (memoria cap. 4.4, figuras 4.3 y 4.4) | **Resuelto 2026-11-08:** `tutor.py` es cliente MCP y lanza `mcp/mcp_server.py` como proceso hijo por stdio. Matiz respecto a la memoria: `compilar_cpp` recibe el proyecto como argumento (inyectado por `tutor.py`, no por el LLM) en lugar de leer `temp_project.json`, y el servidor MCP tiene su propio Warm Pool | `tutor.py`, `mcp/mcp_server.py` |
 | Orquestador | "StateGraph determinista", "Semantic Guardrails", "sub-grafo socrático" (secciones 2.3 y 3.4) | Se usa `create_react_agent` prefabricado de LangGraph. No hay grafo propio ni guardrail que intercepte código resuelto: la contención de la solución depende solo del prompt | `tutor.py` |
-| LLM principal | Groq con LLaMA 3.3 70B (README, sección 3.4: TTFT con Groq) | Gemini `gemini-flash-lite-latest` es el primario; Groq `openai/gpt-oss-20b` es el respaldo | `tutor.py`, `.env.example` |
+| LLM principal | Groq con LLaMA 3.3 70B (README antiguo y sección 3.4 antigua) | **Corregido en 2.x y 3.4:** Gemini `gemini-flash-lite-latest` es el modelo principal; Groq `openai/gpt-oss-20b` es el respaldo y el modelo rápido. La memoria del TFG todavía cita a Groq como motor principal | `tutor.py`, `.env.example` |
 | Streaming | Memoria: WebSocket para el chat | El chat usa SSE sobre HTTP (`/api/chat/stream`). El WebSocket es solo para la terminal | `routers/chat.py` |
 | Perfilado | Tarea tras cada respuesta; guarda "el valor anterior" si no hay novedad (memoria, listado 4.2) | Debounce por longitud de historial, solo el último mensaje, no sobrescribe si no hay novedad | `services/analyst.py`, `chat.py` |
 | Contexto de la consola C++ | La memoria sugiere que el tutor conoce la salida de la consola | La salida de la consola de C++ no viaja en el payload; el tutor obtiene el error llamando a `compilar_cpp`. El contexto de la terminal **Linux** sí llega desde 2026-11-08 (antes quedaba vacío por un bug) | `App.tsx`, `tutor.py`, `LinuxTerminal.tsx` |
