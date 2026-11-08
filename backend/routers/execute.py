@@ -1,9 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from schemas.payload import ExecuteRequest
-from services.compiler import compile_and_run_project 
+from services.compiler import compile_and_run_project
+from services.rate_limit import limiter, EXECUTE_LIMIT
 
 router = APIRouter()
 
 @router.post("/execute")
-async def execute_endpoint(request: ExecuteRequest):
-    return await compile_and_run_project(request.archivos)
+@limiter.limit(EXECUTE_LIMIT)
+async def execute_endpoint(request: Request, body: ExecuteRequest):
+    return await compile_and_run_project(body.archivos)

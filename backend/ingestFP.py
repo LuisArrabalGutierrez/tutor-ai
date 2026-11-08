@@ -1,7 +1,7 @@
 import os
 import time
 import re
-import PyPDF2
+from pypdf import PdfReader
 from google import genai
 from google.genai import types
 from supabase import create_client
@@ -64,7 +64,7 @@ def procesar_pdfs():
         print(f"\n Analizando: {archivo}...")
         
         with open(ruta, "rb") as f:
-            lector = PyPDF2.PdfReader(f)
+            lector = PdfReader(f)
             
             for num_pagina, pagina in enumerate(lector.pages, start=1):
                 if (archivo, num_pagina) in diapositivas_subidas:

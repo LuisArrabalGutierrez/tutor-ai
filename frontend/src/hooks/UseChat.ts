@@ -48,11 +48,11 @@ export function useChat(projectFiles: Record<string, string>) {
         controller.signal
       );
       
-    } catch (error: any) {
+    } catch (error) {
       const errorMsg: Message = { 
         id: 'err-' + Date.now(), 
         role: 'system', 
-        content: ` ${error.message || "Conexión interrumpida."}`, 
+        content: ` ${(error instanceof Error && error.message) || "Conexión interrumpida."}`, 
         timestamp: Date.now() 
       };
       

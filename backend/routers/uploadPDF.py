@@ -2,7 +2,7 @@ import os
 import io
 import asyncio
 import numpy as np
-import PyPDF2
+from pypdf import PdfReader
 import traceback
 from fastapi import APIRouter, UploadFile, File, Header, HTTPException
 from fastapi.responses import JSONResponse
@@ -50,7 +50,7 @@ async def upload_personal_pdf(
         memoria_usuarios[x_session_id] = []
         
         pdf_bytes = await file.read()
-        pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_bytes))
+        pdf_reader = PdfReader(io.BytesIO(pdf_bytes))
         
         texto_completo = ""
         for page in pdf_reader.pages:
