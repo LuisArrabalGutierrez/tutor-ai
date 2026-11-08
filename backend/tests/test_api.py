@@ -1,61 +1,29 @@
-import requests
-import json
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import pytest
+from fastapi.testclient import TestClient
+from main import app
 
-URL = "http://localhost:8000/api/chat"
+pytestmark = pytest.mark.llm
 
-# Simulamos el payload que enviaría el front
-payload = {
-    "mensajes": [
-        {
-            "role": "user", 
-            "content": "Hola, he separado mi código en varios archivos. Intento calcular el doble de 5, pero el programa imprime 15 en lugar de 10. ¿Por qué falla mi lógica?"
-        }
-    ],
-    "archivos": {
-        "main.cpp": """
-            #include <iostream>
-            #include "utils.h"
-
-            using namespace std;
-
-            int main() {
-                cout << "El doble de 5 es: " << calcularDoble(5) << endl;
-                return 0;
-            }
-            """,
-                    "utils.h": """
-            #ifndef UTILS_H
-            #define UTILS_H
-
-            int calcularDoble(int n);
-
-            #endif
-            """,
-                    "utils.cpp": """
-            #include "utils.h"
-
-            int calcularDoble(int n) {
-                return n * 3; 
-            }
-            """
-    }
+CODIGO_CON_ERROR_LOGICO = {
+    "main.cpp": '#include <iostream>\n#include "utils.h"\nusing namespace std;\n'
+                'int main() { cout << "El doble de 5 es: " << calcularDoble(5) << endl; return 0; }',
+    "utils.h": "#ifndef UTILS_H\n#define UTILS_H\nint calcularDoble(int n);\n#endif",
+    "utils.cpp": '#include "utils.h"\nint calcularDoble(int n) { return n * 3; }',
 }
 
-print("Enviando petición al Tutor IA .....")
 
-try:
-    response = requests.post(URL, json=payload)
-    
-    if response.status_code == 200:
-        data = response.json()
-        print("\n RESPUESTA DE LA IA:")
-        print("-" * 50)
-        print(data["respuesta"])
-        print("-" * 50)
-    else:
-        print(f" Error del servidor: {response.status_code}")
-        print(response.text)
-
-except Exception as e:
-    print(f" Error de conexión: {e}")
-    print(" uvicorn (FastAPI) no está corriendo")
+def test_la_ia_localiza_el_error_logico_en_otro_archivo():
+    """Memoria 5.5.1: el tutor lee todo el proyecto y orienta hacia utils.cpp sin dar la solución."""
+    payload = {
+        "historial": [{"role": "user", "content": "Intento calcular el doble de 5 pero el programa imprime 15 en lugar de 10. ¿Por qué falla mi lógica?"}],
+        "archivos": CODIGO_CON_ERROR_LOGICO,
+        "asignatura": "cpp",
+        "terminal_context": "",
+    }
+    with TestClient(app) as client:
+        response = client.post("/api/chat", json=payload, headers={"X-Forwarded-For": "203.0.113.90"})
+    assert response.status_code == 200
+    respuesta = response.json()["reply"].lower()
+    assert any(pista in respuesta for pista in ["utils", "calculardoble", "función", "funcion"])

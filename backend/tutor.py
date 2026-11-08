@@ -1,72 +1,34 @@
 import os
+import re
+import sys
 import json
+import asyncio
+import time
 from contextvars import ContextVar
 from typing import AsyncGenerator, Dict, List, Optional
 from dotenv import load_dotenv
 
 from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from langchain_core.tools import tool
+from langchain_core.tools import StructuredTool
 from langgraph.prebuilt import create_react_agent
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langchain_mcp_adapters.tools import load_mcp_tools
 
 try:
     from langchain_google_genai import ChatGoogleGenerativeAI
 except ImportError:
     ChatGoogleGenerativeAI = None
 
-from services.search import search_theory_logic, async_search_theory_logic
-from services.compiler import compile_and_run_project
-
 load_dotenv()
 
-# ContextVar para aislamiento seguro de archivos por petición sin tocar disco
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+MCP_SERVER_PATH = os.path.join(BACKEND_DIR, "mcp", "mcp_server.py")
+MCP_RETRY_AFTER_S = 60
+
+# ContextVar: proyecto del alumno de la petición en curso. El LLM no lo ve ni lo puede inventar;
+# el adaptador de compilar_cpp lo inyecta como argumento de la herramienta MCP.
 _current_project_context: ContextVar[Dict[str, str]] = ContextVar("current_project_context", default={})
-
-# --- HERRAMIENTAS DIRECTAS EN MEMORIA (0ms cold-start, sin subprocesos IPC) ---
-
-@tool
-async def buscar_apuntes_ugr(pregunta: str) -> str:
-    """
-    Busca en la base de datos de apuntes oficiales de la UGR mediante pgvector.
-    USO OBLIGATORIO: Cuando el alumno pregunta teoría, temario o conceptos de C++ o Linux.
-    NO USAR para saludos ni para corregir código sin dudas teóricas.
-    """
-    return await async_search_theory_logic(pregunta)
-
-@tool
-async def compilar_cpp() -> str:
-    """
-    Compila y ejecuta el proyecto C++ actual del alumno dentro del sandbox seguro de Docker.
-    USO: Solo si el alumno pide explícitamente ejecutar su código o pregunta por qué da error de compilación.
-    """
-    archivos = _current_project_context.get()
-    if not archivos:
-        return "Error: No hay archivos de código en el proyecto actual."
-    try:
-        resultado = await compile_and_run_project(archivos)
-        return resultado.get("output", "Compilación finalizada sin salida.")
-    except Exception as e:
-        return f"Error en sandbox de compilación: {str(e)}"
-
-@tool
-def buscar_internet(consulta: str) -> str:
-    """
-    Busca información en internet mediante DuckDuckGo si el concepto no está en los apuntes UGR.
-    """
-    try:
-        from duckduckgo_search import DDGS
-        resultados = DDGS().text(consulta, max_results=3)
-        if not resultados:
-            return "Sin resultados en internet."
-        texto = "Resultados web:\n"
-        for r in resultados:
-            texto += f"- {r.get('title', '')}: {r.get('body', '')}\n"
-        return texto
-    except Exception as e:
-        return f"Búsqueda web no disponible: {str(e)}"
-
-# Herramientas unificadas
-tutor_tools = [buscar_apuntes_ugr, compilar_cpp, buscar_internet]
 
 # --- INICIALIZACIÓN MULTI-PROVEEDOR Y RESILIENCIA (1M TPM CON GEMINI + FALLBACK GROQ) ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -76,8 +38,6 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 GROQ_FAST_MODEL = os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-primary_agent = None
-fallback_agent = None
 llm_fast = None
 
 # 1. Configuración de Groq (secundario o fast-fallback)
@@ -111,13 +71,140 @@ if GOOGLE_API_KEY and ChatGoogleGenerativeAI:
     except Exception as e:
         print(f"⚠️ [Tutor Init] Error inicializando Gemini: {e}")
 
-# Asignación jerárquica de agentes ReAct
-if llm_gemini:
-    primary_agent = create_react_agent(llm_gemini, tools=tutor_tools)
-    if llm_groq:
-        fallback_agent = create_react_agent(llm_groq, tools=tutor_tools)
-elif llm_groq:
-    primary_agent = create_react_agent(llm_groq, tools=tutor_tools)
+
+
+# --- HERRAMIENTAS VÍA MCP ---------------------------------------------------------------------
+# Las tools (buscar_apuntes_ugr, compilar_cpp, buscar_internet) viven en mcp/mcp_server.py, un
+# proceso hijo por stdio que se mantiene vivo mientras corre la API. Un task dedicado es dueño de
+# la sesión MCP para abrirla y cerrarla desde el mismo task (requisito de anyio).
+
+class _Runtime:
+    def __init__(self, loop):
+        self.loop = loop
+        self.primary = None
+        self.fallback = None
+        self.tools: list = []
+        self.tool_names: List[str] = []
+        self.mcp_ok = False
+        self.started_at = 0.0
+        self.ready = asyncio.Event()
+        self.stop = asyncio.Event()
+        self.task: Optional[asyncio.Task] = None
+
+
+_runtime: Optional[_Runtime] = None
+_init_lock: Optional[asyncio.Lock] = None
+_init_lock_loop = None
+
+
+def _mcp_connection() -> dict:
+    return {
+        "tutor": {
+            "transport": "stdio",
+            "command": sys.executable,
+            "args": [MCP_SERVER_PATH],
+            "cwd": BACKEND_DIR,
+            # Pool propio del servidor MCP: nombres distintos a los del pool de /api/execute
+            "env": {**os.environ, "WARM_POOL_PREFIX": "tutor_mcp_", "WARM_POOL_SIZE": os.getenv("MCP_POOL_SIZE", "2")},
+        }
+    }
+
+
+def _adapt_tools(mcp_tools: list) -> list:
+    """compilar_cpp pide el proyecto como argumento en el servidor MCP; al LLM se le ofrece sin
+    parámetros y el proyecto sale del ContextVar de la petición."""
+    tools = []
+    for t in mcp_tools:
+        if t.name != "compilar_cpp":
+            tools.append(t)
+            continue
+
+        async def _compilar(_mcp_tool=t) -> str:
+            archivos = _current_project_context.get()
+            if not archivos:
+                return "Error: No hay archivos de código en el proyecto actual."
+            try:
+                return _extract_text_content(await _mcp_tool.ainvoke({"archivos": archivos}))
+            except Exception as e:
+                return f"Error en sandbox de compilación: {str(e)}"
+
+        tools.append(StructuredTool.from_function(coroutine=_compilar, name="compilar_cpp", description=t.description))
+    return tools
+
+
+def _build_agents(rt: _Runtime, tools: list) -> None:
+    if llm_gemini:
+        rt.primary = create_react_agent(llm_gemini, tools=tools)
+        if llm_groq:
+            rt.fallback = create_react_agent(llm_groq, tools=tools)
+    elif llm_groq:
+        rt.primary = create_react_agent(llm_groq, tools=tools)
+
+
+async def _mcp_runner(rt: _Runtime) -> None:
+    tools: list = []
+    try:
+        client = MultiServerMCPClient(_mcp_connection())
+        async with client.session("tutor") as session:
+            tools = _adapt_tools(await load_mcp_tools(session))
+            rt.tools = tools
+            rt.tool_names = [t.name for t in tools]
+            rt.mcp_ok = True
+            _build_agents(rt, tools)
+            rt.ready.set()
+            await rt.stop.wait()
+    except asyncio.CancelledError:
+        raise
+    except Exception as e:
+        print(f"⚠️ [MCP] No se pudo usar el servidor de herramientas: {e}", file=sys.stderr)
+    finally:
+        if not rt.ready.is_set():
+            # Sin MCP el tutor sigue respondiendo, pero sin herramientas
+            rt.mcp_ok = False
+            _build_agents(rt, [])
+            rt.ready.set()
+
+
+async def start_tutor_runtime() -> None:
+    """Arranca el servidor MCP y construye los agentes. Idempotente; se llama en el lifespan y, si hace falta, en la primera petición."""
+    global _runtime, _init_lock, _init_lock_loop
+    loop = asyncio.get_running_loop()
+    if _init_lock is None or _init_lock_loop is not loop:
+        _init_lock, _init_lock_loop = asyncio.Lock(), loop
+
+    async with _init_lock:
+        rt = _runtime
+        if rt is not None and rt.loop is loop and rt.ready.is_set():
+            if rt.mcp_ok or time.monotonic() - rt.started_at < MCP_RETRY_AFTER_S:
+                return
+            await _stop_runtime(rt)
+
+        rt = _Runtime(loop)
+        rt.started_at = time.monotonic()
+        _runtime = rt
+        rt.task = asyncio.create_task(_mcp_runner(rt))
+        await rt.ready.wait()
+
+
+async def _stop_runtime(rt: _Runtime) -> None:
+    rt.stop.set()
+    if rt.task and not rt.task.done():
+        try:
+            await asyncio.wait_for(rt.task, timeout=10)
+        except Exception:
+            rt.task.cancel()
+
+
+async def stop_tutor_runtime() -> None:
+    global _runtime
+    rt, _runtime = _runtime, None
+    if rt is not None and rt.loop is asyncio.get_running_loop():
+        await _stop_runtime(rt)
+
+
+async def _get_agents():
+    await start_tutor_runtime()
+    return _runtime.primary, _runtime.fallback
 
 
 def _extract_text_content(content) -> str:
@@ -135,20 +222,26 @@ def _extract_text_content(content) -> str:
     return str(content) if content is not None else ""
 
 
+# Vocabulario de cortesía: el fast-path solo se activa si TODAS las palabras del mensaje están aquí
+_PALABRAS_SALUDO = frozenset({
+    "hola", "holaa", "buenas", "buenos", "dias", "días", "tardes", "noches", "hey", "saludos",
+    "que", "qué", "tal", "como", "cómo", "estas", "estás", "ayuda",
+    "y", "a", "todos", "todas", "tutor",
+})
+
+
 def _es_saludo_o_charla(pregunta: str) -> bool:
-    """Detecta de forma instantánea (<0.01ms) si el mensaje es un saludo o cortesía básica."""
+    """True solo si el mensaje es un saludo puro (<= 5 palabras, todas de cortesía).
+
+    "hola buenas tardes" es saludo; "hola, tengo un error" o "necesito ayuda con punteros" no,
+    porque llevan palabras de contenido y deben pasar por el agente con herramientas.
+    """
     if not pregunta:
         return True
-    p = pregunta.strip().lower()
-    palabras = p.split()
-    if len(palabras) <= 5:
-        saludos = [
-            "hola", "buenas", "hey", "buenos dias", "buenas tardes", "buenas noches",
-            "que tal", "cómo estás", "como estas", "ayuda", "saludos", "hola!", "hola buenas"
-        ]
-        if any(s in p for s in saludos):
-            return True
-    return False
+    palabras = re.findall(r"[a-záéíóúüñ]+", pregunta.lower())
+    if not palabras or len(palabras) > 5:
+        return False
+    return all(p in _PALABRAS_SALUDO for p in palabras)
 
 
 def _build_context_and_messages(
@@ -175,7 +268,8 @@ REGLAS SOCRÁTICAS ESTRICTAS:
 1. TEORÍA: Si pregunta teoría, usa OBLIGATORIAMENTE 'buscar_apuntes_ugr'.
 2. CITAS: Tu respuesta DEBE comenzar con el enlace Markdown exacto devuelto por los apuntes: [tema.pdf - Diapositiva X](url).
 3. GUÍA SOCRÁTICA: Nunca des el comando completo resuelto. Explica la lógica (permisos, tuberías, procesos) y pide al alumno que deduzca el comando.
-4. CIERRE: Concluye siempre con una pregunta que guíe su próximo paso."""
+4. CIERRE: Concluye siempre con una pregunta que guíe su próximo paso.
+FORMATO: Responde solo en Markdown, nunca con etiquetas HTML. El único enlace permitido es el que devuelve 'buscar_apuntes_ugr'; no inventes ni escribas otras URLs."""
         texto_terminal = f"\n=== TERMINAL LINUX ===\n{terminal_context.strip()}" if terminal_context.strip() else ""
     else:
         rol_sistema = f"""Eres el Tutor Socrático de 'Metodología de la Programación' en C/C++ de la Universidad de Granada (UGR).{texto_perfil}
@@ -185,7 +279,8 @@ REGLAS SOCRÁTICAS ESTRICTAS:
 2. CITAS OBLIGATORIAS: Si usas apuntes, la primera línea de tu respuesta DEBE ser el enlace Markdown: [tema.pdf - Diapositiva X](url).
 3. COMPILADOR: Usa 'compilar_cpp' únicamente cuando el alumno lo solicite o haya un error de compilación.
 4. NO DAR LA SOLUCIÓN DIRECTA: Corrige mediante pistas, analogías y preguntas reflexivas sobre el código.
-5. CIERRE: Concluye siempre con una pregunta socrática."""
+5. CIERRE: Concluye siempre con una pregunta socrática.
+FORMATO: Responde solo en Markdown, nunca con etiquetas HTML. El único enlace permitido es el que devuelve 'buscar_apuntes_ugr'; no inventes ni escribas otras URLs."""
         texto_terminal = ""
 
     # 3. Ventana de historial (últimos 8 mensajes)
@@ -257,7 +352,9 @@ async def get_socratic_response_async(
             perfil_alumno=perfil_alumno
         )
 
-        # 1. Intento con Agente Primario (Gemini 2.5 Flash / 1M TPM)
+        primary_agent, fallback_agent = await _get_agents()
+
+        # 1. Intento con Agente Primario (Gemini / 1M TPM) con las herramientas MCP
         if primary_agent:
             try:
                 respuesta = await primary_agent.ainvoke({"messages": mensajes})
@@ -321,8 +418,9 @@ async def get_socratic_response_stream_async(
         )
 
         streamed_any = False
+        primary_agent, fallback_agent = await _get_agents()
 
-        # 1. Stream con Agente Primario (Gemini 2.5 Flash / 1.000.000 TPM)
+        # 1. Stream con Agente Primario (Gemini / 1M TPM) con las herramientas MCP
         if primary_agent:
             try:
                 async for event in primary_agent.astream_events({"messages": mensajes}, version="v2"):

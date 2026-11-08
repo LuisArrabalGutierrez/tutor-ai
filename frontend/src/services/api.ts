@@ -3,6 +3,8 @@ import type { ChatPayload, ExecuteResponse } from '../types/index.ts';
 
 const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
+const isAbort = (e: unknown): boolean => e instanceof Error && e.name === 'AbortError';
+
 const API_URL = isLocal ? (import.meta.env.VITE_API_URL || 'http://localhost:8000') : '';
 const EXECUTE_TIMEOUT = 15000;
 
@@ -68,8 +70,8 @@ export const sendMessageStreamToBackend = async (
             } else if (parsed.error) {
               throw new Error(parsed.error);
             }
-          } catch (e: any) {
-            if (e.message && !dataStr.startsWith("{")) {
+          } catch (e) {
+            if (e instanceof Error && e.message && !dataStr.startsWith("{")) {
               // Si no es json o es un error lanzado
               throw e;
             }
@@ -80,8 +82,8 @@ export const sendMessageStreamToBackend = async (
 
     return fullText;
 
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error) {
+    if (isAbort(error)) {
       if (signal?.reason === 'MANUAL_STOP') {
         throw new Error("Generación detenida.");
       }
@@ -117,8 +119,8 @@ export const sendMessageToBackend = async (payload: ChatPayload, signal?: AbortS
     const resData = await response.json();
     return resData.reply || resData.respuesta;
     
-  } catch (error: any) {
-    if (error.name === 'AbortError') {
+  } catch (error) {
+    if (isAbort(error)) {
       if (signal?.reason === 'MANUAL_STOP') {
         throw new Error("Generación detenida.");
       }
@@ -144,9 +146,9 @@ export const executeCodeBackend = async (archivos: Record<string, string>): Prom
     if (!response.ok) throw new Error("Error en la compilación remota.");
     return await response.json();
     
-  } catch (error: any) {
+  } catch (error) {
     return { 
-      output: error.name === 'AbortError' ? "❌ Tiempo de espera agotado (Timeout)." : "❌ Error de conexión con el compilador.", 
+      output: isAbort(error) ? "❌ Tiempo de espera agotado (Timeout)." : "❌ Error de conexión con el compilador.", 
       isError: true 
     };
   } finally {

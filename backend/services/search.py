@@ -1,4 +1,5 @@
 import os
+import sys
 import urllib.parse
 import asyncio
 from functools import lru_cache
@@ -35,7 +36,7 @@ def _get_embedding_cached(texto: str) -> Optional[Tuple[float, ...]]:
         )
         return tuple(result.embeddings[0].values)
     except Exception as e:
-        print(f"⚠️ [RAG] Error al generar embedding con Google GenAI: {e}")
+        print(f"⚠️ [RAG] Error al generar embedding con Google GenAI: {e}", file=sys.stderr)
         return None
 
 # Caché LRU de resultados de búsqueda completa para preguntas comunes
@@ -108,7 +109,7 @@ def search_theory_logic(pregunta: str) -> str:
         return contexto
 
     except Exception as e:
-        print(f"❌ [RAG] Error en búsqueda Supabase: {e}")
+        print(f"❌ [RAG] Error en búsqueda Supabase: {e}", file=sys.stderr)
         return f"Error en búsqueda en base de datos: {str(e)}"
 
 async def async_search_theory_logic(pregunta: str) -> str:

@@ -7,22 +7,33 @@ interface FileTreeProps {
   onSelectFile: (path: string) => void;
 }
 
-const buildTree = (paths: string[]) => {
-  const tree: any = {};
+type TreeNode = { [name: string]: TreeNode | null };
+
+const buildTree = (paths: string[]): TreeNode => {
+  const tree: TreeNode = {};
   paths.forEach(path => {
     const parts = path.split('/');
-    let current = tree;
+    let current: TreeNode = tree;
     parts.forEach((part, i) => {
       if (!current[part]) {
         current[part] = i === parts.length - 1 ? null : {};
       }
-      current = current[part];
+      current = current[part] as TreeNode;
     });
   });
   return tree;
 };
 
-const TreeItem = ({ name, node, path, activeFile, onSelectFile, level }: any) => {
+interface TreeItemProps {
+  name: string;
+  node: TreeNode | null;
+  path: string;
+  activeFile: string;
+  onSelectFile: (path: string) => void;
+  level: number;
+}
+
+const TreeItem = ({ name, node, path, activeFile, onSelectFile, level }: TreeItemProps) => {
   const [isOpen, setIsOpen] = useState(true);
   const isFolder = node !== null;
   const currentPath = path ? `${path}/${name}` : name;

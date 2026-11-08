@@ -41,6 +41,14 @@ function getSocketUrl(): string {
   return cleanHost.endsWith('/ws/terminal') ? `wss://${cleanHost}` : `wss://${cleanHost}/ws/terminal`;
 }
 
+const MAX_HISTORY_CHARS = 2000;
+const FLUSH_INTERVAL_MS = 250;
+
+// Quita secuencias de color/cursor de xterm y retornos de carro para que el LLM lea texto plano
+// eslint-disable-next-line no-control-regex
+const ANSI_PATTERN = /\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07|\r/g;
+const stripAnsi = (text: string): string => text.replace(ANSI_PATTERN, '');
+
 interface LinuxTerminalProps {
   onTerminalOutputChange?: (output: string) => void;
 }
@@ -75,6 +83,7 @@ export default function LinuxTerminal({ onTerminalOutputChange }: LinuxTerminalP
     term.writeln('\x1b[33m[Conectando con el entorno Linux UGR...]\x1b[0m');
 
     const socketUrl = getSocketUrl();
+    let flushTimer: number | null = null;
 
     // Conexión WebSocket
     const ws = new WebSocket(socketUrl);
@@ -104,18 +113,18 @@ export default function LinuxTerminal({ onTerminalOutputChange }: LinuxTerminalP
       }
     };
 
-    // Renderiza salida del servidor y actualiza el historial
+    // Renderiza salida del servidor y acumula el historial que se envía al tutor como contexto
     ws.onmessage = (event) => {
       term.write(event.data);
 
-      // Limita el historial a 2000 caracteres
-      if (outputHistory.current.length > 2000) {
-        outputHistory.current = outputHistory.current.slice(-2000);
-      }
+      outputHistory.current = (outputHistory.current + stripAnsi(event.data)).slice(-MAX_HISTORY_CHARS);
 
-      // Emite el cambio al componente padre
-      if (onTerminalOutputChange) {
-        onTerminalOutputChange(outputHistory.current);
+      // Throttle: un `cat` grande no debe re-renderizar la app en cada paquete
+      if (onTerminalOutputChange && flushTimer === null) {
+        flushTimer = window.setTimeout(() => {
+          flushTimer = null;
+          onTerminalOutputChange(outputHistory.current);
+        }, FLUSH_INTERVAL_MS);
       }
     };
 
@@ -156,6 +165,7 @@ export default function LinuxTerminal({ onTerminalOutputChange }: LinuxTerminalP
 
     // Cleanup
     return () => {
+      if (flushTimer !== null) window.clearTimeout(flushTimer);
       window.removeEventListener('resize', handleResize);
       resizeObserver.disconnect();
       resizeDisposable.dispose();
