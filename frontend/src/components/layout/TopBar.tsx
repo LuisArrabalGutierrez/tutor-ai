@@ -69,7 +69,7 @@ export default function TopBar({
               ref={fileInputRef} 
               onChange={onUpload} 
               className="hidden" 
-              // @ts-ignore
+              // @ts-expect-error webkitdirectory no está en los tipos de React
               webkitdirectory="" 
               directory="" 
             />
