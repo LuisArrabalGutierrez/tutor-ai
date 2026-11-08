@@ -182,7 +182,7 @@ Para auditoría técnica, reproducibilidad y revisión integral del proyecto, es
 | Directora | Kawtar Benghazi Akhlaki Sekkate (Dpto. de Lenguajes y Sistemas Informáticos) |
 | Centro | ETSIIT, Universidad de Granada. Grado en Ingeniería Informática. Junio de 2026 |
 | Asignaturas cubiertas | Fundamentos de Programación (FP), Metodología de la Programación (MP, C/C++), Fundamentos del Software (FS, Unix/Linux) |
-| Material RAG | PDFs oficiales de las asignaturas, cedidos por el profesor Daniel Peralta Cámara (MP). Están en `backend/apuntes_pdf/{FP,FS,MP}` |
+| Material RAG | PDFs oficiales de las asignaturas, cedidos por el profesor Daniel Peralta Cámara (MP). Se colocan en `backend/apuntes_pdf/{FP,FS,MP}`; la carpeta no se versiona (`.gitignore`) porque es material de terceros |
 | Qué hace | IDE web (editor Monaco + consola C++ + terminal Linux) con un chat de tutor socrático que no da la solución, fundamenta la teoría en los apuntes oficiales vía RAG y perfila en segundo plano al alumno |
 
 ### 5.2. Mapa de archivos
@@ -195,12 +195,11 @@ tutor-ai/
 ├── .github/workflows/deploy.yml    # CI/CD: tests + lint + build; en push a main, además SSH a la VM -> rebuild imagen Docker -> pip -> PM2
 ├── docs/
 │   ├── EXPLICACION.md              # [Este documento] Fuente principal de información del proyecto
-│   ├── LuisArrabalGutierrez_MemoriaTFG.pdf   # Memoria presentada al tribunal (83 págs, con diagramas)
+│   ├── LuisArrabalGutierrez_MemoriaTFG.pdf   # Memoria del TFG (83 págs, con diagramas). Solo local: no se versiona
 │   ├── README.md                   # Copia del README raíz
-│   ├── GUIA_TRASPASO_NUEVO_ALUMNO.md         # Montar todo desde cero con cuentas gratuitas
 │   ├── DESPLIEGUE.md               # Despliegue en GCP: swap, Docker, PM2, ngrok, Vercel, troubleshooting
 │   └── ROADMAP_OPTIMIZACION.md     # Registro de tareas hechas (en .gitignore, solo local)
-├── backend/                        # Python 3.11+, FastAPI
+├── backend/                        # Python 3.10+ (CI y desarrollo en 3.11), FastAPI
 │   ├── main.py                     # App FastAPI: lifespan del Warm Pool, CORS, limiter, routers
 │   ├── tutor.py                    # Cerebro del tutor: prompts socráticos, cliente MCP, fallback multi-LLM, streaming; elige grafo propio o ReAct prefabricado
 │   ├── tutor_graph.py              # StateGraph de LangGraph con guardrails de entrada y de salida (build_tutor_graph)
@@ -220,7 +219,7 @@ tutor-ai/
 │   ├── schemas/                    # payload.py (Pydantic: ChatRequest, ExecuteRequest) y state.py (memoria_usuarios)
 │   ├── mcp/mcp_server.py           # Servidor FastMCP (stdio) con las 3 herramientas del tutor; lo lanza tutor.py como proceso hijo y tiene su propio pool
 │   ├── docker/Dockerfile           # Imagen tutor-ugr-image: Ubuntu + gcc/g++/make/vim/nano/python3, usuario `alumno`
-│   ├── apuntes_pdf/{FP,FS,MP}/     # PDFs oficiales (fuente del RAG)
+│   ├── apuntes_pdf/{FP,FS,MP}/     # PDFs de las asignaturas (fuente del RAG). Solo local: no se versiona
 │   ├── ingestMP.py / ingestFP.py / ingestFS.py   # Ingesta por asignatura: limpia, embebe y guarda en `apuntes`
 │   ├── setup_rag.py                # Asistente: sube PDFs a Storage, ejecuta las 3 ingestas y prueba la búsqueda
 │   ├── supabase_setup.sql          # DDL completo: pgvector, apuntes, match_apuntes, perfiles, RLS, trigger
@@ -744,7 +743,7 @@ Lista basada en lectura de código, no en ejecución. Cada punto indica archivo 
 
 ### 8.4. Mantenimiento y repositorio
 
-26. **[PARCIAL 2026-11-08]** **Código muerto o sin consumidor:** eliminados `temp_project.json` (las dos copias) y el uso muerto de `mcp/mcp_server.py` (ahora lo usa el tutor). Se mantienen `routers/uploadPDF.py`, `schemas/state.py` y `numpy`: la memoria (5.4.2) describe `/upload-pdf` y sus tests como backend ya hecho con interfaz pendiente; hay que decidir si se conecta al chat o se retira.
+26. **[PARCIAL 2026-11-08]** **Código muerto o sin consumidor:** eliminados `temp_project.json` (las dos copias) y el uso muerto de `mcp/mcp_server.py` (ahora lo usa el tutor). Se mantienen `routers/uploadPDF.py` y `schemas/state.py` (`numpy` se eliminó el 2026-11-08, ver sección 15): la memoria (5.4.2) describe `/upload-pdf` y sus tests como backend ya hecho con interfaz pendiente; hay que decidir si se conecta al chat o se retira.
 27. **[RESUELTO 2026-11-08]** **`tests/test_api.py` no es un test:** ejecuta una petición HTTP al importarse (pytest la lanza al recolectar) y usa el formato antiguo (`mensajes`/`respuesta`). Debe convertirse en test o borrarse. `test_api.py` es ahora un test real (marca `llm`).
 28. **El test de rate limiting depende del orden y del estado compartido** del limitador en memoria (los otros tests de `/api/chat` consumen cuota de la misma clave).
 29. **Sin versiones fijadas** en `requirements.txt`; ninguna imagen ni dependencia está bloqueada. `frontend/package.json` incluye `supabase-js` (paquete distinto y sospechoso, "0.0.1-security") junto a `@supabase/supabase-js`; debería eliminarse. **[PARCIAL 2026-11-08]** Eliminado el paquete `supabase-js` del frontend. Siguen sin fijarse versiones. Versiones de `requirements.txt` fijadas con las instaladas en el venv.
@@ -933,3 +932,32 @@ La memoria (83 páginas) está en `docs/LuisArrabalGutierrez_MemoriaTFG.pdf`. La
 - API real arrancada con `uvicorn`: arranca en unos 6 s con los dos pools; `/api/execute` responde bien en ejecución correcta, error de compilación, error de ejecución (con la salida del programa) y ruta peligrosa (422); el chat por SSE devolvió respuesta con cita; la terminal corre como UID 1000 sin red; al apagar la API no queda ningún contenedor `tutor_*`.
 - `tsc -b`, `npm run lint` y `npm run build` del frontend limpios.
 - No verificado: la CI en GitHub, el comportamiento en la VM de producción, el SSE a través de Vercel y la medida de latencia con carga real.
+
+---
+
+## 15. Registro de cambios: fallo del despliegue en la VM (rama `fix/vm-python310-y-analista`)
+
+### 15.1. Qué pasaba
+
+Los logs de PM2 de la VM mostraron tres cosas:
+
+1. **`ModuleNotFoundError: No module named 'pypdf'`** y **699 reinicios** de `backend`: el proceso arrancaba, fallaba al importar y PM2 lo relanzaba en bucle.
+2. **Causa:** la VM usa Python 3.10 y `requirements.txt` fijaba `numpy==2.4.4`, que exige Python 3.11 o superior. El `pip install -r requirements.txt` del despliegue fallaba entero (no se instaló ni `pypdf`) y el script, que no se detenía ante errores, seguía y reiniciaba el backend con dependencias a medias.
+3. **`Error actualizando perfil pedagógico: 'list' object has no attribute 'strip'`:** Gemini devuelve a veces el contenido de la respuesta como lista de bloques en vez de texto, y el analista llamaba a `.strip()` sin comprobarlo. El perfil del alumno no se actualizaba.
+
+El log también mostraba arranques con el formato antiguo ("Iniciando Warm Pool con 3 contenedores"), es decir, la VM seguía ejecutando una versión anterior del código.
+
+### 15.2. Qué se cambió
+
+| Cambio | Archivos |
+| :--- | :--- |
+| `numpy` eliminado: solo servía para guardar un vector como `np.array` en `/upload-pdf` y nadie lo leía. Era el único paquete que exigía Python 3.11 | `requirements.txt`, `routers/uploadPDF.py` |
+| El analista acepta el contenido como texto o como lista de bloques | `services/analyst.py` |
+| El despliegue se detiene si falla un paso (`set -e`): ya no reinicia el backend si `pip` falla, y la versión anterior sigue sirviendo | `.github/workflows/deploy.yml` |
+| Tests del analista (texto, JSON entre vallas, bloques de Gemini, sin modelo) | `tests/test_analyst.py` |
+
+### 15.3. Cómo se comprobó
+
+- `pip install --dry-run --python-version 3.10 -r requirements.txt` resuelve todas las dependencias para Python 3.10.
+- `pytest -m "not llm"`: 83 tests pasan.
+- No verificado: el arranque real en la VM con Python 3.10 (solo se comprobó la resolución de dependencias y los tests en 3.11).

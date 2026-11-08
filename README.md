@@ -166,9 +166,9 @@ Limitaciones conocidas y tareas pendientes: sección 8 de [`docs/EXPLICACION.md`
 
 ## Puesta en marcha
 
-Guía completa con cuentas gratuitas: [`docs/GUIA_TRASPASO_NUEVO_ALUMNO.md`](docs/GUIA_TRASPASO_NUEVO_ALUMNO.md). Despliegue en servidor: [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
+Todo se puede montar con cuentas gratuitas de Supabase, Google AI Studio (Gemini) y Groq. Despliegue en servidor: [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
 
-Prerrequisitos: Node 18+, Python 3.11+, Docker en ejecución y claves de Supabase, Gemini y Groq.
+Prerrequisitos: Node 18+, Python 3.10 o superior (desarrollo y CI en 3.11; la VM de producción usa 3.10), Docker en ejecución y claves de Supabase, Gemini y Groq.
 
 ```bash
 # 1. Base de datos: pegar backend/supabase_setup.sql en el SQL Editor de Supabase
@@ -180,6 +180,7 @@ cp .env.example .env            # rellenar claves (SUPABASE_KEY debe ser la serv
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 (cd docker && docker build -t tutor-ugr-image:latest .)   # imagen del sandbox, obligatoria
+# Pon tus propios apuntes en PDF en backend/apuntes_pdf/{FP,FS,MP}/ (no se incluyen en el repositorio)
 python setup_rag.py             # sube los PDFs y vectoriza los apuntes (opción 1)
 uvicorn main:app --reload --port 8000                     # Swagger en /docs
 
@@ -224,7 +225,7 @@ pytest tests/ -m llm -v           # chat real con Gemini/Groq (consume cuota)
 ```
 backend/   main.py, tutor.py, tutor_graph.py, guardrails.py, routers/, services/ (warm_pool, compiler, search, analyst, rate_limit), auth/, schemas/, docker/, ingest*.py, setup_rag.py, supabase_setup.sql, tests/
 frontend/  src/{App.tsx, hooks/, services/api.ts, components/{auth,chat,editor,layout}}, vercel.json
-docs/      EXPLICACION.md, GUIA_TRASPASO_NUEVO_ALUMNO.md, DESPLIEGUE.md, memoria del TFG (PDF)
+docs/      EXPLICACION.md (referencia técnica completa), DESPLIEGUE.md
 ```
 
 Las tres herramientas del tutor (`buscar_apuntes_ugr`, `compilar_cpp`, `buscar_internet`) se sirven desde `backend/mcp/mcp_server.py`. `tutor.py` solo se conecta como cliente MCP y monta el grafo de `tutor_graph.py`: la tool `compilar_cpp` se le ofrece al LLM sin parámetros y `tutor.py` inyecta el proyecto del alumno al llamar a la tool, de modo que el modelo no puede inventar el código.
