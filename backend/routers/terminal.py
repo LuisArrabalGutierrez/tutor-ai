@@ -10,6 +10,7 @@ import uuid
 import subprocess
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
+from services.warm_pool import security_opts
 
 router = APIRouter()
 
@@ -57,6 +58,7 @@ async def websocket_terminal(websocket: WebSocket):
                 "--name", container_name,
                 "--network", "none",
                 "--cap-drop", "ALL",
+                *security_opts(),
                 "--cpus", "1",
                 "--user", "1000:1000",
                 "-w", "/home/alumno",

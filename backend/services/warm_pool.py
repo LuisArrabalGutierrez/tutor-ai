@@ -13,6 +13,17 @@ class PoolBusyError(Exception):
     """Todos los contenedores están ocupados y no se liberó ninguno a tiempo."""
 
 
+def security_opts() -> list[str]:
+    """Opciones de seguridad comunes a los contenedores del sandbox.
+
+    no-new-privileges va activo por defecto (probado en la VM). Algunos hosts de desarrollo
+    lo rechazan con "operation not permitted"; ahí se apaga con SANDBOX_NO_NEW_PRIVILEGES=0.
+    """
+    if os.getenv("SANDBOX_NO_NEW_PRIVILEGES", "1") == "0":
+        return []
+    return ["--security-opt", "no-new-privileges"]
+
+
 def _log(msg: str) -> None:
     # stderr: el servidor MCP usa stdout para el protocolo, no se puede imprimir ahí
     print(msg, file=sys.stderr, flush=True)
@@ -56,8 +67,8 @@ class WarmPoolManager:
             "--memory-swap", "256m",
             "--cpus", "0.5",
             "--pids-limit", "64",
-            # no-new-privileges se probó y en este host Docker hace fallar el exec de `sleep` (operation not permitted)
             "--cap-drop", "ALL",
+            *security_opts(),
             IMAGE,
             "sleep", "infinity",
         )
