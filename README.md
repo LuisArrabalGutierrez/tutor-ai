@@ -94,23 +94,14 @@ sequenceDiagram
 
 `POST /api/execute` y la tool `compilar_cpp` del tutor ejecutan el mismo código (`services/compiler.py`), cada una sobre su propio Warm Pool (el del proceso de la API y el del proceso MCP).
 
-```mermaid
-sequenceDiagram
-    participant F as Frontend (Ejecutar)
-    participant E as POST /api/execute (30/min)
-    participant C as compiler.py (asyncio, no bloquea)
-    participant P as Warm Pool
-    participant K as Contenedor tutor_warm_N
-
-    F->>E: {archivos}
-    E->>C: compile_and_run_project
-    C->>P: get_container() (máx. 30 s; si no hay, "servidor ocupado")
-    P-->>C: contenedor sano (comprobado con docker inspect)
-    C->>K: docker cp del proyecto + make o g++ ; timeout 30 ./programa
-    K-->>C: stdout, o log de compilación si falla (124 = tiempo, 137 = memoria)
-    C->>P: release(): el contenedor se destruye y se recrea en segundo plano
-    C-->>F: {output, isError}
-```
+1. El frontend envía los archivos del proyecto a `POST /api/execute` (30 peticiones por minuto).
+2. `compiler.py` (asyncio, no bloquea) llama a `compile_and_run_project`.
+3. Pide un contenedor al Warm Pool con `get_container()`. Espera como máximo 30 s. Si no hay ninguno libre, responde "servidor ocupado".
+4. El Warm Pool devuelve un contenedor sano `tutor_warm_N`, comprobado con `docker inspect`.
+5. Copia el proyecto con `docker cp` y ejecuta `make` o `g++`, y luego `timeout 30 ./programa`.
+6. Devuelve `stdout`, o el log de compilación si falla. El código 124 es tiempo agotado y 137 es memoria agotada.
+7. `release()` destruye el contenedor y lo recrea en segundo plano.
+8. El frontend recibe `{output, isError}`.
 
 ---
 
