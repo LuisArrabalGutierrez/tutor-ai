@@ -67,3 +67,37 @@ def test_write_project_no_escribe_fuera_del_directorio(tmp_path):
 
 def test_build_script_sin_fuentes_devuelve_none():
     assert _build_script({"notas.txt": "x"}, False) is None
+
+
+def test_run_no_se_cuelga_si_otro_proceso_sigue_escribiendo_tras_cortar():
+    """Regresión: al cortar la salida se mata al cliente, pero un proceso hijo puede seguir escribiendo.
+    asyncio pausa la tubería con el búfer lleno, nunca lee el EOF y proc.wait() no volvía."""
+    import asyncio
+    from services.compiler import _run
+
+    async def inundar():
+        # stderr cerrado desde el principio; `yes` sobrevive 2 s a la muerte de bash
+        orden = "exec 2>&-; timeout 2 yes " + "x" * 200 + " & wait"
+        return await asyncio.wait_for(_run("bash", "-c", orden, max_output=1024), timeout=10)
+
+    _, out, _, cortado = asyncio.run(inundar())
+    assert cortado is True and len(out) == 1024
+
+
+def test_makefile_puede_escribir_en_subcarpetas_del_proyecto():
+    """Regresión: `docker cp` dejaba los archivos con el uid del host y el alumno no podía escribir en src/."""
+    data = _ejecutar({
+        "Makefile": "main: src/main.o\n\tg++ -o main src/main.o\nsrc/main.o: src/main.cpp\n\tg++ -c src/main.cpp -o src/main.o\n",
+        "src/main.cpp": '#include <fstream>\n#include <iostream>\nint main(){ std::ofstream f("src/datos.txt", std::ios::app); f << 1; std::cout << (f.good() ? "escrito" : "sin permiso"); }',
+        "src/datos.txt": "0",
+    }).json()
+    assert data["isError"] is False, data["output"]
+    assert "escrito" in data["output"]
+
+
+def test_los_archivos_copiados_son_del_usuario_del_contenedor():
+    data = _ejecutar({
+        "main.cpp": '#include <cstdlib>\nint main(){ return system("test \\"$(stat -c %u dir/a.txt)\\" = \\"$(id -u)\\" && echo MISMO_USUARIO"); }',
+        "dir/a.txt": "x",
+    }).json()
+    assert "MISMO_USUARIO" in data["output"], data["output"]
