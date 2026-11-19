@@ -1,0 +1,51 @@
+# fecha_utc: 2026-11-16T18:40:52Z
+# entorno: vm
+# commit: 6914f9bfc47bcee245f9904ea61d22f678133a06
+# cpu: AMD EPYC 7B12
+# vcpu: 2
+# ram_gib: 3.8
+# kernel: 6.8.0-1070-gcp
+# docker: 29.1.3
+# python: 3.10.12
+# timeout_interno_s: 30
+caso,rep,total_ms,salida_ok,contenedor_recreado,procesos_restantes
+referencia,0,643.11,1,,
+referencia,1,546.15,1,,
+referencia,2,672.34,1,,
+referencia,3,486.21,1,,
+referencia,4,582.07,1,,
+referencia,5,600.87,1,,
+referencia,6,656.14,1,,
+referencia,7,603.84,1,,
+referencia,8,603.9,1,,
+referencia,9,524.12,1,,
+bucle,0,30590.59,1,1,0
+bucle,1,30632.55,1,1,0
+bucle,2,30610.5,1,1,0
+bucle,3,30285.2,1,1,0
+bucle,4,30448.12,1,1,0
+bucle,5,30237.39,1,1,0
+bucle,6,30264.99,1,1,0
+bucle,7,30385.03,1,1,0
+bucle,8,30584.3,1,1,0
+bucle,9,30641.64,1,1,0
+bucle,10,30508.7,1,1,0
+bucle,11,30415.13,1,1,0
+bucle,12,30248.89,1,1,0
+bucle,13,30561.49,1,1,0
+bucle,14,30279.46,1,1,0
+bucle,15,30268.64,1,1,0
+bucle,16,30349.91,1,1,0
+bucle,17,30572.21,1,1,0
+bucle,18,30616.17,1,1,0
+bucle,19,30562.8,1,1,0
+bucle,20,30398.74,1,1,0
+bucle,21,30494.09,1,1,0
+bucle,22,30356.61,1,1,0
+bucle,23,30591.97,1,1,0
+bucle,24,30569.08,1,1,0
+bucle,25,30625.94,1,1,0
+bucle,26,30342.0,1,1,0
+bucle,27,30264.96,1,1,0
+bucle,28,30451.84,1,1,0
+bucle,29,30520.38,1,1,0

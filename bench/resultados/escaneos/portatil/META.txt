@@ -1,0 +1,4 @@
+fecha_utc: 2026-11-16T18:49:07Z
+entorno: portatil
+commit: 9fd034e76e6b100e102f10fa21f0eb457a80870c
+imagen_sandbox: sha256:bd0dde18ba7a86b08b07c0882d56b7affe60a9ecad30f231263922bd56fc4d4e creada 2026-06-20T00:36:12.422607196+02:00

@@ -1,0 +1,76 @@
+# fecha_utc: 2026-11-16T18:39:22Z
+# entorno: portatil
+# commit: 9fd034e76e6b100e102f10fa21f0eb457a80870c
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# origen: rag_resultados.csv
+# preguntas: 96
+grupo,valor,criterio,umbral,n,recall@1,recall@3,recall@5,mrr,sin_resultado,top1_otra_asignatura,alguna_otra_asignatura
+total,todas,estricto,0.0,96,0.7604,0.9375,0.9688,0.8555,0.0,,
+total,todas,estricto,0.3,96,0.7604,0.9375,0.9688,0.8555,0.0,,
+total,todas,estricto,0.4,96,0.7604,0.9375,0.9688,0.8555,0.0,0.0312,0.1562
+total,todas,estricto,0.5,96,0.7604,0.9375,0.9688,0.8555,0.0,,
+total,todas,mas_menos_1,0.0,96,0.7812,0.9479,0.9792,0.8696,0.0,,
+total,todas,mas_menos_1,0.3,96,0.7812,0.9479,0.9792,0.8696,0.0,,
+total,todas,mas_menos_1,0.4,96,0.7812,0.9479,0.9792,0.8696,0.0,,
+total,todas,mas_menos_1,0.5,96,0.7812,0.9479,0.9792,0.8696,0.0,,
+asignatura,FP,estricto,0.0,32,0.5938,0.9062,0.9375,0.751,0.0,,
+asignatura,FP,estricto,0.3,32,0.5938,0.9062,0.9375,0.751,0.0,,
+asignatura,FP,estricto,0.4,32,0.5938,0.9062,0.9375,0.751,0.0,0.0,0.0312
+asignatura,FP,estricto,0.5,32,0.5938,0.9062,0.9375,0.751,0.0,,
+asignatura,FP,mas_menos_1,0.0,32,0.625,0.9375,0.9688,0.7771,0.0,,
+asignatura,FP,mas_menos_1,0.3,32,0.625,0.9375,0.9688,0.7771,0.0,,
+asignatura,FP,mas_menos_1,0.4,32,0.625,0.9375,0.9688,0.7771,0.0,,
+asignatura,FP,mas_menos_1,0.5,32,0.625,0.9375,0.9688,0.7771,0.0,,
+asignatura,MP,estricto,0.0,32,0.7812,0.9062,0.9688,0.8623,0.0,,
+asignatura,MP,estricto,0.3,32,0.7812,0.9062,0.9688,0.8623,0.0,,
+asignatura,MP,estricto,0.4,32,0.7812,0.9062,0.9688,0.8623,0.0,0.0938,0.4375
+asignatura,MP,estricto,0.5,32,0.7812,0.9062,0.9688,0.8623,0.0,,
+asignatura,MP,mas_menos_1,0.0,32,0.7812,0.9062,0.9688,0.863,0.0,,
+asignatura,MP,mas_menos_1,0.3,32,0.7812,0.9062,0.9688,0.863,0.0,,
+asignatura,MP,mas_menos_1,0.4,32,0.7812,0.9062,0.9688,0.863,0.0,,
+asignatura,MP,mas_menos_1,0.5,32,0.7812,0.9062,0.9688,0.863,0.0,,
+asignatura,FS,estricto,0.0,32,0.9062,1.0,1.0,0.9531,0.0,,
+asignatura,FS,estricto,0.3,32,0.9062,1.0,1.0,0.9531,0.0,,
+asignatura,FS,estricto,0.4,32,0.9062,1.0,1.0,0.9531,0.0,0.0,0.0
+asignatura,FS,estricto,0.5,32,0.9062,1.0,1.0,0.9531,0.0,,
+asignatura,FS,mas_menos_1,0.0,32,0.9375,1.0,1.0,0.9688,0.0,,
+asignatura,FS,mas_menos_1,0.3,32,0.9375,1.0,1.0,0.9688,0.0,,
+asignatura,FS,mas_menos_1,0.4,32,0.9375,1.0,1.0,0.9688,0.0,,
+asignatura,FS,mas_menos_1,0.5,32,0.9375,1.0,1.0,0.9688,0.0,,
+tipo,teoria,estricto,0.0,51,0.8235,0.9804,1.0,0.9069,0.0,,
+tipo,teoria,estricto,0.3,51,0.8235,0.9804,1.0,0.9069,0.0,,
+tipo,teoria,estricto,0.4,51,0.8235,0.9804,1.0,0.9069,0.0,0.0196,0.1765
+tipo,teoria,estricto,0.5,51,0.8235,0.9804,1.0,0.9069,0.0,,
+tipo,teoria,mas_menos_1,0.0,51,0.8235,0.9804,1.0,0.9069,0.0,,
+tipo,teoria,mas_menos_1,0.3,51,0.8235,0.9804,1.0,0.9069,0.0,,
+tipo,teoria,mas_menos_1,0.4,51,0.8235,0.9804,1.0,0.9069,0.0,,
+tipo,teoria,mas_menos_1,0.5,51,0.8235,0.9804,1.0,0.9069,0.0,,
+tipo,codigo,estricto,0.0,20,0.75,0.9,0.9,0.8238,0.0,,
+tipo,codigo,estricto,0.3,20,0.75,0.9,0.9,0.8238,0.0,,
+tipo,codigo,estricto,0.4,20,0.75,0.9,0.9,0.8238,0.0,0.0,0.0
+tipo,codigo,estricto,0.5,20,0.75,0.9,0.9,0.8238,0.0,,
+tipo,codigo,mas_menos_1,0.0,20,0.75,0.95,0.95,0.8417,0.0,,
+tipo,codigo,mas_menos_1,0.3,20,0.75,0.95,0.95,0.8417,0.0,,
+tipo,codigo,mas_menos_1,0.4,20,0.75,0.95,0.95,0.8417,0.0,,
+tipo,codigo,mas_menos_1,0.5,20,0.75,0.95,0.95,0.8417,0.0,,
+tipo,erratas,estricto,0.0,11,0.8182,1.0,1.0,0.9091,0.0,,
+tipo,erratas,estricto,0.3,11,0.8182,1.0,1.0,0.9091,0.0,,
+tipo,erratas,estricto,0.4,11,0.8182,1.0,1.0,0.9091,0.0,0.0909,0.2727
+tipo,erratas,estricto,0.5,11,0.8182,1.0,1.0,0.9091,0.0,,
+tipo,erratas,mas_menos_1,0.0,11,0.8182,1.0,1.0,0.9091,0.0,,
+tipo,erratas,mas_menos_1,0.3,11,0.8182,1.0,1.0,0.9091,0.0,,
+tipo,erratas,mas_menos_1,0.4,11,0.8182,1.0,1.0,0.9091,0.0,,
+tipo,erratas,mas_menos_1,0.5,11,0.8182,1.0,1.0,0.9091,0.0,,
+tipo,ambigua,estricto,0.0,14,0.5,0.7857,0.9286,0.6714,0.0,,
+tipo,ambigua,estricto,0.3,14,0.5,0.7857,0.9286,0.6714,0.0,,
+tipo,ambigua,estricto,0.4,14,0.5,0.7857,0.9286,0.6714,0.0,0.0714,0.2143
+tipo,ambigua,estricto,0.5,14,0.5,0.7857,0.9286,0.6714,0.0,,
+tipo,ambigua,mas_menos_1,0.0,14,0.6429,0.7857,0.9286,0.7429,0.0,,
+tipo,ambigua,mas_menos_1,0.3,14,0.6429,0.7857,0.9286,0.7429,0.0,,
+tipo,ambigua,mas_menos_1,0.4,14,0.6429,0.7857,0.9286,0.7429,0.0,,
+tipo,ambigua,mas_menos_1,0.5,14,0.6429,0.7857,0.9286,0.7429,0.0,,

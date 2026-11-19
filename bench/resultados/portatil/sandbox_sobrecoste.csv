@@ -1,0 +1,44 @@
+# fecha_utc: 2026-11-16T18:06:07Z
+# entorno: portatil
+# commit: 9fd034e76e6b100e102f10fa21f0eb457a80870c
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# descartadas_calentamiento: 2
+# linea_base: host
+programa,via,rep,calentamiento,ms
+hola,host,0,1,594.27
+hola,sandbox,0,1,1748.5
+hola,host,1,1,370.57
+hola,sandbox,1,1,1484.99
+hola,host,2,0,375.55
+hola,sandbox,2,0,1617.79
+hola,host,3,0,380.47
+hola,sandbox,3,0,1531.62
+mediano,host,0,1,854.63
+mediano,sandbox,0,1,2704.56
+mediano,host,1,1,831.88
+mediano,sandbox,1,1,2687.07
+mediano,host,2,0,833.24
+mediano,sandbox,2,0,2609.11
+mediano,host,3,0,882.55
+mediano,sandbox,3,0,2586.35
+makefile,host,0,1,811.22
+makefile,sandbox,0,1,2477.93
+makefile,host,1,1,783.14
+makefile,sandbox,1,1,2511.19
+makefile,host,2,0,785.99
+makefile,sandbox,2,0,2478.34
+makefile,host,3,0,792.25
+makefile,sandbox,3,0,2438.0
+calculo,host,0,1,1648.99
+calculo,sandbox,0,1,7992.87
+calculo,host,1,1,1669.9
+calculo,sandbox,1,1,8151.2
+calculo,host,2,0,1668.71
+calculo,sandbox,2,0,7983.1
+calculo,host,3,0,1664.03
+calculo,sandbox,3,0,8059.06
