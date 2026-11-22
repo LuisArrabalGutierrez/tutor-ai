@@ -589,11 +589,16 @@ def terminal_huerfana(o):
     vivas = sum(f["sigue_viva"] == "1" for f in filas)
     o.macro("OrphanAlive", f"{vivas}/{n}")
     o.macro("OrphanWaitS", o.n(float(filas[0]["espera_s"]), 0))
+    limpias = sum(f.get("viva_tras_reiniciar") == "0" for f in filas)
+    if "viva_tras_reiniciar" in filas[0]:
+        o.macro("OrphanCleanedOnRestart", f"{limpias}/{n}")
     o.texto("## Seguridad: terminales huérfanas si la API muere (F-7)\n")
     o.texto("API en local con una terminal abierta por WebSocket; se mata solo el proceso de la API con SIGKILL y se mira "
             f"si el contenedor de la terminal sigue vivo {filas[0]['espera_s']} s después.\n")
-    o.tabla_md(["n", "Terminal abierta", "Contenedor vivo tras matar la API"],
-               [(n, f"{sum(f['terminal_abierta'] == '1' for f in filas)} de {n}", f"{vivas} de {n}")])
+    o.texto("Después se arranca la API otra vez (como un reinicio de pm2), con el arreglo de F-7.\n")
+    o.tabla_md(["n", "Terminal abierta", "Contenedor vivo tras matar la API", "Borrado al reiniciar la API"],
+               [(n, f"{sum(f['terminal_abierta'] == '1' for f in filas)} de {n}", f"{vivas} de {n}",
+                 f"{limpias} de {n}" if "viva_tras_reiniciar" in filas[0] else "-")])
     o.fuente(meta, "portatil", "seguridad_terminal_huerfana")
 
 
