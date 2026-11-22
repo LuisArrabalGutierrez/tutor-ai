@@ -31,6 +31,7 @@ def banderas_seguridad() -> list:
 def usar_backend(prefijo: str = "bench_warm_", tam: int = 3) -> None:
     """Deja importable el backend con un pool propio, para no tocar los contenedores de producción."""
     os.environ["WARM_POOL_PREFIX"] = prefijo
+    os.environ.setdefault("TERMINAL_PREFIX", "bench_term_")  # el arranque borra las terminales huérfanas de su prefijo
     os.environ["WARM_POOL_SIZE"] = str(tam)
     os.environ.setdefault("TUTOR_MCP_EAGER", "0")
     if BACKEND_DIR not in sys.path:

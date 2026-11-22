@@ -8,6 +8,7 @@ import struct
 import signal
 import uuid
 import subprocess
+import sys
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 from services.warm_pool import security_opts
@@ -16,6 +17,8 @@ router = APIRouter()
 
 # Tope de terminales simultáneas: cada una reserva hasta 512 MB en la VM
 MAX_TERMINALS = int(os.getenv("MAX_TERMINALS", "10"))
+# Prefijo propio por instancia: una instancia de pruebas en la misma máquina no toca las terminales de producción
+TERMINAL_PREFIX = os.getenv("TERMINAL_PREFIX", "tutor_term_")
 _active_terminals = 0
 # Disco de la terminal: la raíz es de solo lectura y /tmp y /home/alumno son tmpfs de este tamaño (cuentan contra los 512 MB)
 TERMINAL_DISK_SIZE = os.getenv("TERMINAL_DISK_SIZE", "64m")
@@ -43,6 +46,23 @@ def docker_run_args(container_name: str) -> list[str]:
     ]
 
 
+async def cleanup_orphan_terminals() -> int:
+    """Borra las terminales que sobrevivieron a una caída de la API (F-7); al arrancar no hay ninguna activa."""
+    proc = await asyncio.create_subprocess_exec(
+        "docker", "ps", "-aq", "--filter", f"name=^{TERMINAL_PREFIX}",
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL,
+    )
+    out, _ = await proc.communicate()
+    ids = out.decode().split()
+    if ids:
+        rm = await asyncio.create_subprocess_exec(
+            "docker", "rm", "-f", *ids, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL,
+        )
+        await rm.wait()
+        print(f"[Terminal] {len(ids)} terminales huérfanas borradas al arrancar", file=sys.stderr, flush=True)
+    return len(ids)
+
+
 @router.websocket("/ws/terminal")
 async def websocket_terminal(websocket: WebSocket):
     global _active_terminals
@@ -56,7 +76,7 @@ async def websocket_terminal(websocket: WebSocket):
         return
 
     # Identificador único de contenedor para garantizar aislamiento y cierre limpio
-    container_name = f"tutor_term_{uuid.uuid4().hex[:12]}"
+    container_name = f"{TERMINAL_PREFIX}{uuid.uuid4().hex[:12]}"
     loop = asyncio.get_running_loop()
 
     # Creamos una Pseudo-Terminal (PTY) de Linux

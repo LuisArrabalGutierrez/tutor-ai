@@ -16,6 +16,7 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     # Esto se ejecuta al iniciar el servidor
     await pool.start_pool()
+    await terminal.cleanup_orphan_terminals()
     # Servidor MCP con las herramientas del tutor (proceso hijo con su propio pool de contenedores).
     # Si se desactiva, se arranca de forma perezosa en el primer mensaje del chat.
     if os.getenv("TUTOR_MCP_EAGER", "1") != "0":
