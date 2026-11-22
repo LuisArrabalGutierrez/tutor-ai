@@ -17,6 +17,30 @@ router = APIRouter()
 # Tope de terminales simultáneas: cada una reserva hasta 512 MB en la VM
 MAX_TERMINALS = int(os.getenv("MAX_TERMINALS", "10"))
 _active_terminals = 0
+# Disco de la terminal: la raíz es de solo lectura y /tmp y /home/alumno son tmpfs de este tamaño (cuentan contra los 512 MB)
+TERMINAL_DISK_SIZE = os.getenv("TERMINAL_DISK_SIZE", "64m")
+
+
+def docker_run_args(container_name: str) -> list[str]:
+    """Argumentos de `docker run` tras `-it --rm`. El home es un tmpfs vacío: se rellena desde /etc/skel al abrir."""
+    montaje = f"rw,exec,nosuid,nodev,size={TERMINAL_DISK_SIZE}"
+    return [
+        "--name", container_name,
+        "--network", "none",
+        "--cap-drop", "ALL",
+        *security_opts(),
+        "--read-only",
+        "--tmpfs", f"/tmp:{montaje},mode=1777",
+        "--tmpfs", f"/home/alumno:{montaje},uid=1000,gid=1000,mode=0755",
+        "--shm-size", "8m",
+        "--cpus", "1",
+        "--user", "1000:1000",
+        "-w", "/home/alumno",
+        "-e", "HOME=/home/alumno",
+        "--pids-limit", "100",
+        "--memory", "512m",
+        "tutor-ugr-image", "bash", "-c", "cp -rn /etc/skel/. ~ 2>/dev/null; exec bash",
+    ]
 
 
 @router.websocket("/ws/terminal")
@@ -53,20 +77,7 @@ async def websocket_terminal(websocket: WebSocket):
 
         # Lanzar bash interactivo dentro del sandbox seguro de Docker sin permisos root (UID 1000)
         try:
-            os.execvp("docker", [
-                "docker", "run", "-it", "--rm",
-                "--name", container_name,
-                "--network", "none",
-                "--cap-drop", "ALL",
-                *security_opts(),
-                "--cpus", "1",
-                "--user", "1000:1000",
-                "-w", "/home/alumno",
-                "-e", "HOME=/home/alumno",
-                "--pids-limit", "100",
-                "--memory", "512m",
-                "tutor-ugr-image", "bash"
-            ])
+            os.execvp("docker", ["docker", "run", "-it", "--rm", *docker_run_args(container_name)])
         except BaseException:
             # Si docker no arranca, el hijo (copia de la API) no debe seguir ejecutando código de la API
             os._exit(127)
