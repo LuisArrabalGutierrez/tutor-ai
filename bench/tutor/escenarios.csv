@@ -1,0 +1,51 @@
+id,asignatura,esperada,proyecto,consulta
+R01,cpp,ninguna,ninguno,hola
+R02,cpp,ninguna,ninguno,buenas tardes
+R03,linux,ninguna,ninguno,hola qué tal
+R04,cpp,ninguna,ok,hola tutor
+R05,cpp,apuntes,ninguno,¿Qué es un puntero y qué contiene?
+R06,cpp,apuntes,ninguno,¿Qué diferencia hay entre new y new[]?
+R07,cpp,apuntes,ninguno,explícame qué es el constructor de copia
+R08,cpp,apuntes,ninguno,¿Qué es el puntero this?
+R09,cpp,apuntes,ninguno,¿qué dice el temario sobre la sobrecarga de operadores?
+R10,cpp,apuntes,ok,¿Qué es una función friend?
+R11,cpp,apuntes,ninguno,¿En qué segmentos se divide la memoria de un programa?
+R12,cpp,apuntes,ninguno,¿Cómo se lee un fichero con ifstream según los apuntes?
+R13,cpp,apuntes,ninguno,q es un c-string
+R14,cpp,apuntes,media,¿Qué diferencia hay entre parámetros formales y actuales?
+R15,cpp,apuntes,ninguno,¿Qué es la recursividad y qué es el caso base?
+R16,cpp,apuntes,ninguno,¿Qué diferencia hay entre una matriz estática y una dinámica?
+R17,linux,apuntes,ninguno,¿Qué significan los permisos rwx en un directorio?
+R18,linux,apuntes,ninguno,¿Para qué sirve la orden man?
+R19,linux,apuntes,ninguno,¿Qué diferencia hay entre comillas simples y dobles en bash?
+R20,linux,apuntes,ninguno,¿Cómo es la estructura de un makefile?
+R21,linux,apuntes,ninguno,explícame las redirecciones > y >>
+R22,linux,apuntes,ninguno,¿Qué hace la orden kill y qué señal manda por defecto?
+R23,cpp,compilar,error_compilacion,compila mi código y dime qué pasa
+R24,cpp,compilar,error_compilacion,me da un error al compilar y no lo entiendo
+R25,cpp,compilar,ok,ejecuta mi programa por favor
+R26,cpp,compilar,media,¿puedes compilar y ejecutar mi proyecto?
+R27,cpp,compilar,puntero,lanza mi programa a ver si funciona
+R28,cpp,compilar,bucle,compílalo y dime si da algún aviso
+R29,cpp,compilar,error_compilacion,¿por qué no compila?
+R30,cpp,compilar,clase,prueba a compilar mi proyecto
+R31,cpp,compilar,primo,ejecuta el código y dime qué sale
+R32,cpp,compilar,error_compilacion,el compilador se queja de algo en mi main
+R33,cpp,compilar,ok,¿me compilas esto?
+R34,cpp,compilar,bucle,ejecútalo
+R35,cpp,internet,ninguno,¿qué novedades trae el estándar C++23?
+R36,cpp,internet,ninguno,¿qué es Rust y en qué se diferencia de C++?
+R37,cpp,internet,ninguno,¿cuál es la última versión de GCC?
+R38,linux,internet,ninguno,¿qué es systemd y quién lo desarrolla?
+R39,linux,internet,ninguno,¿qué diferencias hay entre Ubuntu 24.04 y Fedora 41?
+R40,cpp,internet,ninguno,busca en internet qué es la biblioteca Boost
+R41,cpp,ninguna,media,no sé por qué mi media sale sin decimales
+R42,cpp,ninguna,bucle,"creo que mi bucle se pasa del vector, ¿en qué me fijo?"
+R43,cpp,ninguna,puntero,"mi programa peta al rellenar el vector, dame una pista"
+R44,cpp,ninguna,clase,"al cambiar b también cambia a, ¿por qué puede ser?"
+R45,cpp,ninguna,primo,no sé por dónde empezar la función esPrimo
+R46,cpp,ninguna,ok,¿mi código está bien estructurado?
+R47,cpp,ninguna,media,"gracias, ya lo he entendido"
+R48,linux,ninguna,ninguno,"quiero contar las líneas de un archivo, ¿cómo lo pienso?"
+R49,linux,ninguna,ninguno,gracias por la ayuda
+R50,cpp,ninguna,bucle,¿qué valor tiene i en la última vuelta de mi for?

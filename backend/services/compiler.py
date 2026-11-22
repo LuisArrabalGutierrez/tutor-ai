@@ -1,5 +1,7 @@
 import asyncio
+import io
 import shlex
+import tarfile
 import tempfile
 import os
 import uuid
@@ -11,6 +13,7 @@ LOCAL_TEMP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__
 os.makedirs(LOCAL_TEMP_DIR, exist_ok=True)
 
 EXEC_TIMEOUT_S = 60
+COPY_TIMEOUT_S = 20
 MAX_OUTPUT_BYTES = 64 * 1024
 COMPILE_ERROR_EXIT = 217  # código reservado: la compilación falló (el programa del alumno no llegó a ejecutarse)
 
@@ -40,6 +43,9 @@ async def _run(*args: str, timeout: Optional[float] = None, max_output: int = MA
             data += chunk
         if proc.returncode is None:
             proc.kill()
+        # Vaciar hasta EOF: con el búfer lleno asyncio pausa la tubería y proc.wait() no volvería nunca
+        while await stream.read(65536):
+            pass
         return bytes(data[:max_output]), True
 
     try:
@@ -56,10 +62,34 @@ async def _run(*args: str, timeout: Optional[float] = None, max_output: int = MA
     return proc.returncode, out.decode("utf-8", "replace"), err.decode("utf-8", "replace"), out_cortado or err_cortado
 
 
-async def _run_checked(*args: str) -> None:
-    code, _, stderr, _ = await _run(*args)
-    if code != 0:
-        raise DockerCommandError(stderr)
+def _tar_project(temp_dir: str) -> bytes:
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w") as tar:
+        tar.add(temp_dir, arcname=".")
+    return buf.getvalue()
+
+
+async def _copy_project(temp_dir: str, container_name: str, container_workdir: str) -> None:
+    """Crea el directorio de trabajo y vuelca el proyecto dentro con `tar` por stdin.
+
+    `docker cp` conserva el uid del host: si no coincide con el del usuario del contenedor, el alumno
+    no puede escribir en las subcarpetas ni modificar sus propios archivos. `tar` los crea como ese usuario.
+    """
+    datos = await asyncio.to_thread(_tar_project, temp_dir)
+    proc = await asyncio.create_subprocess_exec(
+        "docker", "exec", "-i", container_name, "sh", "-c",
+        'mkdir -p "$1" && tar -xf - -C "$1" --no-same-owner --no-same-permissions', "_", container_workdir,
+        stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE,
+    )
+    try:
+        _, err = await asyncio.wait_for(proc.communicate(datos), timeout=COPY_TIMEOUT_S)
+    except BaseException:
+        if proc.returncode is None:
+            proc.kill()
+        await asyncio.shield(proc.wait())
+        raise
+    if proc.returncode != 0:
+        raise DockerCommandError(err.decode("utf-8", "replace"))
 
 
 def _write_project(temp_dir: str, archivos: dict) -> bool:
@@ -129,8 +159,7 @@ async def compile_and_run_project(archivos: dict) -> dict:
                 return {"output": "Error: No hay archivos .cpp", "isError": True}
 
             try:
-                await _run_checked("docker", "exec", container_name, "mkdir", "-p", container_workdir)
-                await _run_checked("docker", "cp", f"{temp_dir}/.", f"{container_name}:{container_workdir}/")
+                await _copy_project(temp_dir, container_name, container_workdir)
 
                 code, stdout, stderr, cortado = await _run(
                     "docker", "exec", "-w", container_workdir, container_name, "bash", "-c", script_interno,

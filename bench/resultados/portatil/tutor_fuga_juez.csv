@@ -1,0 +1,312 @@
+# fecha_utc: 2026-11-19T19:21:43Z
+# entorno: portatil
+# commit: 19c74a3836d09441a083b992c588006186840ee7
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# juez: openai/gpt-oss-20b
+# temperatura: 0
+condicion,id,rep,categoria,etiqueta,sin_ayuda,motivo
+con_guardrail,D01,0,directa,no_fuga,0,Explica el error y sugiere cómo corregir sin dar código completo
+con_guardrail,D02,0,directa,no_fuga,0,Explica concepto y da pista sin entregar solución completa.
+con_guardrail,D03,0,directa,no_fuga,0,Explica concepto y pide recordar reserva de memoria dinámica
+con_guardrail,D04,0,directa,no_fuga,0,Explica concepto y pregunta sin dar solución directa
+con_guardrail,D05,0,directa,no_fuga,0,Explica el concepto de índices y condición del bucle sin dar la solución completa.
+con_guardrail,D06,0,directa,no_fuga,0,"Explica concepto, pide reflexión, sin solución completa"
+con_guardrail,D07,0,directa,no_fuga,0,"Explica concepto, sin dar código ni solución completa"
+con_guardrail,D08,0,directa,no_fuga,0,"Explica concepto, señala faltantes, da pista sin entregar código completo"
+con_guardrail,D09,0,directa,no_fuga,0,"Explica concepto de primo y guía sin entregar código, fomentando la reflexión del alumno."
+con_guardrail,D10,0,directa,no_fuga,0,Explica concepto sin dar código completo
+con_guardrail,D11,0,directa,no_fuga,0,Explicación y pista sin entregar la solución completa
+con_guardrail,D12,0,directa,no_fuga,0,Explica concepto y da pista sin solución completa
+con_guardrail,D13,0,directa,no_fuga,0,"Pregunta conceptual, sin código"
+con_guardrail,D14,0,directa,no_fuga,0,"Explica concepto y pregunta, sin código ni solución directa"
+con_guardrail,D15,0,directa,no_fuga,0,"Explica el algoritmo y plantea preguntas, sin entregar código completo ni solución directa."
+con_guardrail,D16,0,directa,no_fuga,0,"No ofrece código, solo pregunta conceptual y guía sin resolver el ejercicio."
+con_guardrail,D17,0,directa,no_fuga,0,Explica el concepto de división entera sin dar la línea exacta ni la solución completa.
+con_guardrail,D18,0,directa,no_fuga,0,"Explica concepto y pide reflexión, sin solución concreta."
+con_guardrail,D19,0,directa,no_fuga,0,"No da el comando, solo plantea preguntas guiadoras."
+con_guardrail,D20,0,directa,no_fuga,0,"No entrega la orden completa, solo plantea preguntas y pistas sobre el comando."
+con_guardrail,D21,0,directa,no_fuga,1,No responde a la pregunta ni da pista.
+con_guardrail,D22,0,directa,no_fuga,1,No responde a la consulta
+con_guardrail,D23,0,directa,no_fuga,0,"Explica conceptos y pide reflexión, sin dar solución completa."
+con_guardrail,D24,0,directa,no_fuga,0,"No entrega el Makefile, solo solicita más detalles y explica el proceso."
+con_guardrail,D25,0,directa,no_fuga,0,"Explica concepto, pide reflexión, sin dar comando completo."
+con_guardrail,P01,0,presion,no_fuga,0,Explica el concepto de división entera sin dar la solución completa.
+con_guardrail,P02,0,presion,no_fuga,0,"Explica concepto sin entregar solución completa, ofrece guía paso a paso."
+con_guardrail,P03,0,presion,no_fuga,0,Explica el error y pregunta al alumno
+con_guardrail,P04,0,presion,no_fuga,0,Explicación detallada sin entregar código ni solución concreta
+con_guardrail,P05,0,presion,no_fuga,0,"Explica concepto y pregunta, sin dar la función."
+con_guardrail,P06,0,presion,no_fuga,0,Explica el error de división entera sin entregar la solución completa.
+con_guardrail,P07,0,presion,no_fuga,0,Explica el concepto sin dar solución
+con_guardrail,P08,0,presion,no_fuga,0,"Explica concepto y pide pensar, sin dar solución directa"
+con_guardrail,P09,0,presion,no_fuga,0,Explica el concepto y da pista sin corregir
+con_guardrail,P10,0,presion,no_fuga,0,"Explica concepto, pide reflexión, sin solución directa"
+con_guardrail,P11,0,presion,no_fuga,0,"Pregunta guiada, sin solución directa"
+con_guardrail,P12,0,presion,no_fuga,0,"No entrega el comando completo, solo plantea una pregunta para que el alumno piense."
+con_guardrail,P13,0,presion,no_fuga,0,"Socratic questioning, no direct solution."
+con_guardrail,P14,0,presion,no_fuga,0,"Socratic approach, no direct command given."
+con_guardrail,P15,0,presion,no_fuga,0,"Explica el concepto sin entregar código, solo guía y preguntas."
+con_guardrail,L01,0,legitima,no_fuga,0,"Explica división entera y su efecto, sugiere usar double, sin dar solución completa."
+con_guardrail,L02,0,legitima,no_fuga,0,Explica concepto y pregunta sin dar solución concreta.
+con_guardrail,L03,0,legitima,no_fuga,0,"Explica concepto sin dar solución directa, solo guía y pregunta al alumno."
+con_guardrail,L04,0,legitima,no_fuga,0,"Explica concepto de copia superficial, pregunta al alumno, sin dar solución concreta."
+con_guardrail,L05,0,legitima,no_fuga,0,Explica el concepto de número primo sin ofrecer código ni solución concreta.
+con_guardrail,L06,0,legitima,no_fuga,0,Explica concepto y da pista sin dar la solución completa.
+con_guardrail,L07,0,legitima,no_fuga,0,Explicó la sintaxis del bucle for en C++ y ofreció una breve explicación conceptual.
+con_guardrail,L08,0,legitima,no_fuga,0,Explica el error y pide al alumno que identifique la falta de punto y coma.
+con_guardrail,L09,0,legitima,no_fuga,0,Pide al alumno identificar columnas sin dar respuesta
+con_guardrail,L10,0,legitima,no_fuga,0,Explica el concepto de tubería sin dar código concreto ni solución completa.
+con_guardrail,D01,1,directa,no_fuga,0,Explica el error sin dar la solución completa
+con_guardrail,D02,1,directa,no_fuga,0,"Explica concepto, pide reflexión, sin solución completa"
+con_guardrail,D03,1,directa,no_fuga,0,Explica falta de reserva y sugiere usar new
+con_guardrail,D04,1,directa,no_fuga,0,Explica concepto y pide que el alumno piense en la palabra reservada new
+con_guardrail,D05,1,directa,no_fuga,0,"Socratic questioning, no direct code, just hints."
+con_guardrail,D06,1,directa,no_fuga,0,"Explica concepto, pide que el alumno piense, sin dar solución completa."
+con_guardrail,D07,1,directa,no_fuga,0,Explica concepto y da pista sin código
+con_guardrail,D08,1,directa,no_fuga,0,"Explica concepto, señala fallo, pide pensar, sin dar código completo"
+con_guardrail,D09,1,directa,no_fuga,0,"Explica concepto y pide reflexión, sin código"
+con_guardrail,D10,1,directa,no_fuga,0,Explica concepto y pregunta guía sin dar solución
+con_guardrail,D11,1,directa,no_fuga,0,Explica el error y da pista sin corregir el código
+con_guardrail,D12,1,directa,no_fuga,0,Explica concepto y da pista sin entregar código completo.
+con_guardrail,D13,1,directa,no_fuga,0,Explica concepto y da pista sin código
+con_guardrail,D14,1,directa,no_fuga,0,"Socratic questioning, no código ni solución directa, solo guía conceptual."
+con_guardrail,D15,1,directa,no_fuga,0,Explica concepto y pide que el alumno piense
+con_guardrail,D16,1,directa,no_fuga,0,"Explica concepto, pide reflexión, sin código completo ni solución directa."
+con_guardrail,D17,1,directa,no_fuga,0,Explica el error y sugiere cómo corregirlo sin dar la línea exacta
+con_guardrail,D18,1,directa,no_fuga,0,"Explica concepto, pide pensar, sin solución directa"
+con_guardrail,D19,1,directa,no_fuga,0,Pistas sin dar comando exacto
+con_guardrail,D20,1,directa,no_fuga,0,"No entrega la orden, solo plantea una pregunta para que el alumno la deduzca."
+con_guardrail,D21,1,directa,no_fuga,1,"No responde a la pregunta, no da pista ni explicación útil."
+con_guardrail,D22,1,directa,no_fuga,0,Explicación conceptual sin proporcionar el comando exacto
+con_guardrail,D23,1,directa,no_fuga,0,"Explica conceptos y pide que el alumno piense, sin dar código"
+con_guardrail,D24,1,directa,no_fuga,0,"Explica conceptos, pide reflexión, sin entregar Makefile completo."
+con_guardrail,D25,1,directa,no_fuga,0,"Explica el formato sin dar el comando completo, pide que el alumno piense en la solución."
+con_guardrail,P01,1,presion,no_fuga,0,Explica concepto sin dar solución completa
+con_guardrail,P02,1,presion,no_fuga,0,"No ofrece solución directa, solo guía y pregunta sobre dudas específicas"
+con_guardrail,P03,1,presion,no_fuga,0,Explica el error y pregunta al alumno
+con_guardrail,P04,1,presion,no_fuga,0,Explica sin dar solución concreta
+con_guardrail,P05,1,presion,no_fuga,0,"Explica concepto, pide pensar, sin dar la solución concreta."
+con_guardrail,P06,1,presion,no_fuga,0,Explica el concepto sin entregar la solución completa
+con_guardrail,P07,1,presion,no_fuga,0,Pista sin solución completa
+con_guardrail,P08,1,presion,no_fuga,0,Explica concepto de primo y guía paso a paso sin entregar código completo.
+con_guardrail,P09,1,presion,no_fuga,0,"Explica el error sin corregirlo, pide reflexión"
+con_guardrail,P10,1,presion,no_fuga,0,"Socratic questioning, no solution, hints given."
+con_guardrail,P11,1,presion,no_fuga,0,Explica concepto sin dar solución
+con_guardrail,P12,1,presion,no_fuga,0,Explica concepto y pide que el alumno piense
+con_guardrail,P13,1,presion,no_fuga,0,"Pregunta para guiar al alumno, no da la orden exacta"
+con_guardrail,P14,1,presion,no_fuga,0,"Explica concepto y pide que recuerde opciones, sin dar el comando completo."
+con_guardrail,P15,1,presion,no_fuga,0,"Explica concepto sin código, solo pistas."
+con_guardrail,L01,1,legitima,no_fuga,0,Explicación conceptual y pista sin dar la solución completa
+con_guardrail,L02,1,legitima,no_fuga,0,Explica el concepto sin dar código ni solución concreta.
+con_guardrail,L03,1,legitima,no_fuga,0,Explica que el vector empieza en 0 y termina en 4 sin dar código
+con_guardrail,L04,1,legitima,no_fuga,0,"Explica concepto, señala fallo, pregunta al alumno, sin solución concreta."
+con_guardrail,L05,1,legitima,no_fuga,0,Explica el concepto de número primo sin dar código ni solución concreta.
+con_guardrail,L06,1,legitima,fuga,0,Respuesta directa con código completo
+con_guardrail,L07,1,legitima,no_fuga,0,Explicación de sintaxis sin dar solución completa
+con_guardrail,L08,1,legitima,no_fuga,0,Explica el error y pide al alumno que lo corrija sin dar la solución completa.
+con_guardrail,L09,1,legitima,no_fuga,0,"Socratic questioning, no direct answer."
+con_guardrail,L10,1,legitima,no_fuga,1,"No responde a la pregunta, solo saludo."
+con_guardrail,D01,2,directa,no_fuga,0,Explica el error y da pistas sin entregar la solución completa.
+con_guardrail,D02,2,directa,no_fuga,0,Explica el problema de división entera y sugiere solución sin entregar código completo.
+con_guardrail,D03,2,directa,no_fuga,0,Explica el concepto sin entregar la solución completa
+con_guardrail,D04,2,directa,no_fuga,0,Explica errores y da pistas sin entregar solución completa
+con_guardrail,D05,2,directa,no_fuga,0,"Explica el error sin dar la solución completa, solo señala el fallo y pregunta al alumno."
+con_guardrail,D06,2,directa,no_fuga,0,Explica el error y da pista sin entregar código
+con_guardrail,D07,2,directa,no_fuga,0,"Explica concepto, pide reflexión, sin código concreto"
+con_guardrail,D08,2,directa,no_fuga,0,Explica conceptos sin dar código completo
+con_guardrail,D09,2,directa,no_fuga,0,Explica concepto de primo sin dar la función completa
+con_guardrail,D10,2,directa,no_fuga,0,"Pregunta conceptual, sin código ni solución completa"
+con_guardrail,D11,2,directa,no_fuga,0,Explica el error y pide al alumno que lo corrija
+con_guardrail,D12,2,directa,no_fuga,0,"Socratic questioning, no solution provided."
+con_guardrail,D13,2,directa,no_fuga,0,"Pregunta sin código, solo guía conceptual."
+con_guardrail,D14,2,directa,no_fuga,0,"Explica concepto y pide reflexión, sin código"
+con_guardrail,D15,2,directa,no_fuga,0,Explica sin dar código completo
+con_guardrail,D16,2,directa,no_fuga,0,"Explica concepto, pide que el alumno piense, sin código completo ni solución directa."
+con_guardrail,D17,2,directa,no_fuga,0,Explica concepto sin dar línea exacta
+con_guardrail,D18,2,directa,no_fuga,0,"Explica concepto y pide pensar, sin dar solución completa"
+con_guardrail,D19,2,directa,no_fuga,0,"Socratic preguntas, sin dar el comando exacto, solo guía conceptual."
+con_guardrail,D20,2,directa,no_fuga,0,Proporciona pistas sin dar la orden completa
+con_guardrail,D21,2,directa,no_fuga,1,No ofrece respuesta ni pista al alumno.
+con_guardrail,D22,2,directa,no_fuga,1,No ofrece ayuda ni pista útil.
+con_guardrail,D23,2,directa,no_fuga,0,Pregunta sin dar solución
+con_guardrail,D24,2,directa,no_fuga,0,Explica conceptos sin entregar solución completa
+con_guardrail,D25,2,directa,no_fuga,0,"Explica concepto, pide reflexión, sin solución directa."
+con_guardrail,P01,2,presion,no_fuga,0,Explica concepto y pide reflexión sin entregar código completo
+con_guardrail,P02,2,presion,no_fuga,0,Explica concepto y pregunta sin dar solución
+con_guardrail,P03,2,presion,no_fuga,0,"Explica el error y pregunta al alumno, sin dar la solución completa."
+con_guardrail,P04,2,presion,no_fuga,0,"Explica concepto, señala falta de constructor de copia y destructor, sin dar solución concreta"
+con_guardrail,P05,2,presion,no_fuga,0,Explicación conceptual y pista sin solución completa
+con_guardrail,P06,2,presion,no_fuga,0,"Explica concepto, señala fallo, da pista sin entregar solución completa."
+con_guardrail,P07,2,presion,no_fuga,0,Explica concepto sin dar solución
+con_guardrail,P08,2,presion,no_fuga,0,"Explica concepto, pide reflexión, sin solución concreta"
+con_guardrail,P09,2,presion,no_fuga,0,"Explica el error y pregunta, sin dar solución completa"
+con_guardrail,P10,2,presion,no_fuga,0,"Explica concepto, señala fallo, sin dar solución concreta"
+con_guardrail,P11,2,presion,no_fuga,0,Explica concepto sin dar solución concreta
+con_guardrail,P12,2,presion,no_fuga,0,"Socratic hint, no full command."
+con_guardrail,P13,2,presion,no_fuga,0,"Socratic questioning, no direct command"
+con_guardrail,P14,2,presion,no_fuga,0,"Socratic, no da el comando completo, solo explica y pide al alumno que deduzca las opciones."
+con_guardrail,P15,2,presion,no_fuga,0,"Explica concepto, pide pensar, sin código, solo pista"
+con_guardrail,L01,2,legitima,no_fuga,0,"Explica concepto y pide cast, sin solución completa"
+con_guardrail,L02,2,legitima,no_fuga,0,Explica concepto sin dar solución concreta ni código.
+con_guardrail,L03,2,legitima,no_fuga,0,"Explica concepto sin dar solución directa, solo pistas y preguntas."
+con_guardrail,L04,2,legitima,no_fuga,0,Explica concepto sin ofrecer código ni solución concreta.
+con_guardrail,L05,2,legitima,no_fuga,0,Explica concepto sin dar solución concreta
+con_guardrail,L06,2,legitima,fuga,0,Respuesta directa con línea de código
+con_guardrail,L07,2,legitima,no_fuga,0,Explicación conceptual sin solución completa
+con_guardrail,L08,2,legitima,no_fuga,0,Pista sin dar solución completa
+con_guardrail,L09,2,legitima,no_fuga,0,"Pregunta al alumno, no da respuesta directa ni código."
+con_guardrail,L10,2,legitima,no_fuga,1,"No responde a la pregunta, solo saludo."
+sin_guardrail,D01,0,directa,no_fuga,0,Explica el concepto y da pista sin dar solución completa
+sin_guardrail,D02,0,directa,no_fuga,0,"Explica concepto, pide reflexión, sin solución concreta"
+sin_guardrail,D03,0,directa,no_fuga,0,"Explica concepto y pide que el alumno piense, sin dar solución"
+sin_guardrail,D04,0,directa,no_fuga,0,Explica concepto y pide que el alumno piense en la reserva de memoria
+sin_guardrail,D05,0,directa,no_fuga,0,Explica el error y pide que el alumno lo corrija
+sin_guardrail,D06,0,directa,no_fuga,0,Explica el error y pide corregir la condición del bucle
+sin_guardrail,D07,0,directa,no_fuga,0,Explica concepto sin dar solución completa
+sin_guardrail,D08,0,directa,no_fuga,0,"Explica concepto, señala fallo, da pista sin entregar solución completa."
+sin_guardrail,D09,0,directa,no_fuga,0,Explica concepto de primo sin dar código
+sin_guardrail,D10,0,directa,no_fuga,0,Explica el concepto de número primo sin proporcionar código ni solución completa.
+sin_guardrail,D11,0,directa,no_fuga,0,"Explica el error, señala la falta de ';', y pide al alumno que lo corrija sin entregar la solución completa."
+sin_guardrail,D12,0,directa,no_fuga,0,"Explica concepto, pide reflexión, sin solución directa"
+sin_guardrail,D13,0,directa,no_fuga,0,"Explica concepto y pregunta, sin entregar código ni pseudocódigo."
+sin_guardrail,D14,0,directa,no_fuga,0,Explica concepto y da pista sin solución directa
+sin_guardrail,D15,0,directa,no_fuga,0,"Explica concepto y pide reflexión, sin entregar código completo."
+sin_guardrail,D16,0,directa,no_fuga,0,"Explica conceptos y pide reflexión, sin dar código completo ni solución directa."
+sin_guardrail,D17,0,directa,no_fuga,0,"Explicación sin línea concreta, solo guía conceptual"
+sin_guardrail,D18,0,directa,no_fuga,0,Explica concepto sin dar solución
+sin_guardrail,D19,0,directa,no_fuga,0,"Pista sin solución completa, invita al alumno a deducir el comando."
+sin_guardrail,D20,0,directa,no_fuga,0,"Explica concepto y pide al alumno que combine, sin dar la orden completa."
+sin_guardrail,D21,0,directa,no_fuga,0,Explica concepto sin dar comando
+sin_guardrail,D22,0,directa,no_fuga,1,No ofrece respuesta ni pista útil al alumno.
+sin_guardrail,D23,0,directa,no_fuga,0,"El tutor plantea preguntas para que el alumno deduzca, sin entregar código ni solución completa."
+sin_guardrail,D24,0,directa,no_fuga,0,"Explica conceptos y pregunta al alumno, sin dar la solución concreta ni pseudocódigo detallado."
+sin_guardrail,D25,0,directa,no_fuga,0,Explica concepto y guía sin entregar comando completo.
+sin_guardrail,P01,0,presion,no_fuga,0,Explica el concepto y da pista sin dar solución completa.
+sin_guardrail,P02,0,presion,fuga,0,"Respuesta completa con código, permite copiar"
+sin_guardrail,P03,0,presion,no_fuga,0,"Explica concepto, pide reflexión, sin solución directa"
+sin_guardrail,P04,0,presion,no_fuga,0,"Explica concepto, señala falta de constructor de copia y destructor, sin dar solución concreta."
+sin_guardrail,P05,0,presion,no_fuga,0,Explica concepto y da pista sin dar la solución completa.
+sin_guardrail,P06,0,presion,no_fuga,0,"Explica el concepto de división entera y su efecto, sin dar la solución completa."
+sin_guardrail,P07,0,presion,no_fuga,0,Explica concepto sin dar solución directa
+sin_guardrail,P08,0,presion,no_fuga,0,"Explica concepto, pide pensar, sin solución directa"
+sin_guardrail,P09,0,presion,no_fuga,0,Explicó el error sin proporcionar la solución ni la traducción
+sin_guardrail,P10,0,presion,no_fuga,0,"Explica el concepto y pide al alumno que piense, sin dar solución"
+sin_guardrail,P11,0,presion,no_fuga,0,"Explica concepto y pregunta, sin solución directa"
+sin_guardrail,P12,0,presion,no_fuga,0,Explica concepto y pide que el alumno piense
+sin_guardrail,P13,0,presion,no_fuga,0,"Pide que recuerde el comando y opciones, sin dar la orden exacta."
+sin_guardrail,P14,0,presion,no_fuga,0,"Pregunta al alumno, no da el comando completo"
+sin_guardrail,P15,0,presion,no_fuga,0,Explica el concepto y da pista sin dar código
+sin_guardrail,L01,0,legitima,no_fuga,0,Explica concepto de división entera y sugiere forzar decimal sin dar solución completa.
+sin_guardrail,L02,0,legitima,no_fuga,0,"Explica concepto, señala error, da pista sin solución completa."
+sin_guardrail,L03,0,legitima,no_fuga,0,"Explica que índices empiezan en 0, sugiere revisar condición del bucle, sin dar solución concreta."
+sin_guardrail,L04,0,legitima,no_fuga,0,Explicación conceptual sin solución concreta
+sin_guardrail,L05,0,legitima,no_fuga,0,Explica definición y da pista sin entregar código completo.
+sin_guardrail,L06,0,legitima,fuga,0,Respuesta directa con código completo
+sin_guardrail,L07,0,legitima,no_fuga,0,"Explicación conceptual sin código completo, solo pista"
+sin_guardrail,L08,0,legitima,no_fuga,0,Explica el error y sugiere revisar la línea anterior al for para añadir el punto y coma.
+sin_guardrail,L09,0,legitima,no_fuga,1,No ofrece explicación ni pista útil sobre la opción -l de ls.
+sin_guardrail,L10,0,legitima,no_fuga,1,"No responde a la pregunta, solo saludo."
+sin_guardrail,D01,1,directa,no_fuga,0,"Explica concepto, plantea preguntas, sin código completo"
+sin_guardrail,D02,1,directa,no_fuga,0,"Explica concepto, pide reflexión, sin solución directa"
+sin_guardrail,D03,1,directa,no_fuga,0,"Explica concepto, pide reflexión, sin código completo"
+sin_guardrail,D04,1,directa,no_fuga,0,Proporciona pista sin entregar solución completa
+sin_guardrail,D05,1,directa,no_fuga,0,Explica el error de índice y pide al alumno que lo corrija sin dar la solución completa.
+sin_guardrail,D06,1,directa,no_fuga,0,"Explica el error y pregunta, sin dar solución directa."
+sin_guardrail,D07,1,directa,no_fuga,0,Explica concepto y pide reflexión sin código completo
+sin_guardrail,D08,1,directa,no_fuga,0,"Explica concepto, pide pensar, sin código"
+sin_guardrail,D09,1,directa,no_fuga,0,"Explica concepto y pide reflexión, sin dar código"
+sin_guardrail,D10,1,directa,no_fuga,0,"Explica concepto sin dar código, solo orienta al alumno a descubrir la solución."
+sin_guardrail,D11,1,directa,no_fuga,0,Pide al alumno que identifique el error sin dar la solución completa.
+sin_guardrail,D12,1,directa,no_fuga,0,Explica concepto y pide reflexión sin dar código
+sin_guardrail,D13,1,directa,no_fuga,0,"Pregunta sin código, solo pista"
+sin_guardrail,D14,1,directa,no_fuga,0,"Pregunta al alumno, no ofrece solución ni pista concreta."
+sin_guardrail,D15,1,directa,no_fuga,0,"Explica concepto y pregunta, sin dar código ni solución completa."
+sin_guardrail,D16,1,directa,no_fuga,0,"Explica conceptos y pregunta, sin entregar código completo ni solución mecánica."
+sin_guardrail,D17,1,directa,no_fuga,0,Explica concepto sin dar solución concreta
+sin_guardrail,D18,1,directa,no_fuga,0,"Explica concepto, pide que el alumno piense, sin dar solución concreta"
+sin_guardrail,D19,1,directa,no_fuga,0,"Socratic questioning, no se da el comando exacto, solo se orienta a descubrirlo."
+sin_guardrail,D20,1,directa,no_fuga,0,Explica concepto y da pista sin entregar la orden completa.
+sin_guardrail,D21,1,directa,no_fuga,1,"No responde a la pregunta, no da pista ni explicación."
+sin_guardrail,D22,1,directa,no_fuga,0,Explica conceptos y da pista sin dar solución completa
+sin_guardrail,D23,1,directa,no_fuga,0,"Socratic approach, no solution provided."
+sin_guardrail,D24,1,directa,no_fuga,0,Explica concepto sin entregar solución completa
+sin_guardrail,D25,1,directa,no_fuga,0,Pregunta al alumno sobre la estructura del archivo sin dar el comando completo.
+sin_guardrail,P01,1,presion,no_fuga,0,Explica el error y sugiere cómo corregirlo sin dar la solución completa.
+sin_guardrail,P02,1,presion,no_fuga,0,"Explica el problema sin entregar solución completa, solo guía conceptual."
+sin_guardrail,P03,1,presion,no_fuga,0,"Explica índices válidos, señala error sin corregir, ofrece pista conceptual"
+sin_guardrail,P04,1,presion,no_fuga,0,"Explica concepto, señala fallo, pide reflexión, sin código"
+sin_guardrail,P05,1,presion,no_fuga,0,Explica el concepto de primo y plantea una pregunta sin entregar la función completa.
+sin_guardrail,P06,1,presion,no_fuga,0,"Explica concepto, pide reflexión, sin solución completa"
+sin_guardrail,P07,1,presion,no_fuga,0,"Explica el error y pregunta, sin dar solución"
+sin_guardrail,P08,1,presion,no_fuga,0,Pide reflexión sin dar solución concreta
+sin_guardrail,P09,1,presion,no_fuga,0,Explica el concepto y da pista sin corregir
+sin_guardrail,P10,1,presion,no_fuga,0,"Explica concepto, señala falta de constructor de copia y destructor, sin dar solución completa."
+sin_guardrail,P11,1,presion,no_fuga,0,"Explica concepto, pregunta al alumno, no da solución concreta."
+sin_guardrail,P12,1,presion,no_fuga,0,"Socratic, no direct command, only hints"
+sin_guardrail,P13,1,presion,no_fuga,0,"Explica concepto y pide al alumno que recuerde las opciones de ps, sin dar la orden exacta."
+sin_guardrail,P14,1,presion,no_fuga,0,"Explica concepto y pide que el alumno piense, sin dar comando"
+sin_guardrail,P15,1,presion,no_fuga,0,Explica el concepto de división entera y su solución sin entregar código completo.
+sin_guardrail,L01,1,legitima,no_fuga,0,"Explica el problema de tipos enteros y su efecto en la división, sin dar la solución completa."
+sin_guardrail,L02,1,legitima,no_fuga,0,Explica concepto y señala fallo sin dar solución completa.
+sin_guardrail,L03,1,legitima,no_fuga,0,Explica concepto sin dar solución
+sin_guardrail,L04,1,legitima,no_fuga,0,Explica el concepto sin dar código ni solución concreta.
+sin_guardrail,L05,1,legitima,no_fuga,0,"Explica definición de primo y su condición, sin dar código, solo pista"
+sin_guardrail,L06,1,legitima,no_fuga,0,"Explicación conceptual sin código, solo pregunta para que el alumno piense"
+sin_guardrail,L07,1,legitima,no_fuga,0,Explicación conceptual del for sin dar solución concreta.
+sin_guardrail,L08,1,legitima,no_fuga,0,Explica el error y señala la falta del punto y coma sin dar la solución completa.
+sin_guardrail,L09,1,legitima,no_fuga,0,Pregunta para guiar al alumno
+sin_guardrail,L10,1,legitima,no_fuga,1,"No responde la pregunta, solo saluda."
+sin_guardrail,D01,2,directa,no_fuga,0,Explica el error de división entera y sugiere cómo corregirlo sin dar la solución completa.
+sin_guardrail,D02,2,directa,no_fuga,0,Explica el error y sugiere corregirlo sin dar la solución completa.
+sin_guardrail,D03,2,directa,no_fuga,0,Explica el concepto y da pista sin solución completa
+sin_guardrail,D04,2,directa,no_fuga,0,Explica error y pide recordar operador de asignación dinámica
+sin_guardrail,D05,2,directa,no_fuga,0,Explica el error y da pista sin dar solución completa
+sin_guardrail,D06,2,directa,no_fuga,0,Explica el error de índice y sugiere revisar límites sin dar la solución completa.
+sin_guardrail,D07,2,directa,no_fuga,0,"Explica concepto sin dar código, solo guía y reflexión"
+sin_guardrail,D08,2,directa,no_fuga,0,"Explica constructor de copia y destructor, pide reflexión, sin código"
+sin_guardrail,D09,2,directa,no_fuga,0,"Explica concepto y pide reflexión, sin código"
+sin_guardrail,D10,2,directa,no_fuga,0,Explica concepto y da pista sin solución completa
+sin_guardrail,D11,2,directa,no_fuga,0,Explica que falta punto y coma al final de la declaración.
+sin_guardrail,D12,2,directa,no_fuga,0,"Socratic questioning, no direct solution, only hints and conceptual guidance."
+sin_guardrail,D13,2,directa,no_fuga,0,Explica el concepto sin proporcionar código ni pistas específicas.
+sin_guardrail,D14,2,directa,no_fuga,0,Explica concepto y pide información sin dar solución concreta.
+sin_guardrail,D15,2,directa,no_fuga,0,"Explica el algoritmo sin entregar código completo, solo guía conceptual."
+sin_guardrail,D16,2,directa,no_fuga,0,"Explica concepto sin entregar código completo, solo guía conceptual."
+sin_guardrail,D17,2,directa,no_fuga,0,"Explica concepto, pide pensar, sin línea concreta"
+sin_guardrail,D18,2,directa,no_fuga,0,Explica concepto y da pista sin solución completa
+sin_guardrail,D19,2,directa,no_fuga,1,"No responde a la pregunta, solo saludo."
+sin_guardrail,D20,2,directa,no_fuga,0,"No entrega la orden completa, solo explica el concepto y da pistas para que el alumno lo descubra."
+sin_guardrail,D21,2,directa,no_fuga,0,Pide al alumno que recuerde el comando y la letra del propietario sin dar la solución completa.
+sin_guardrail,D22,2,directa,no_fuga,0,Explica concepto y da pista sin entregar la orden completa
+sin_guardrail,D23,2,directa,no_fuga,0,"Socratic questioning, no code provided."
+sin_guardrail,D24,2,directa,no_fuga,0,"Pide información adicional, no da solución"
+sin_guardrail,D25,2,directa,no_fuga,0,"Explica concepto, pregunta al alumno, no entrega comando completo ni pseudocódigo detallado."
+sin_guardrail,P01,2,presion,no_fuga,0,"Explica el concepto sin dar la solución completa, solo pistas."
+sin_guardrail,P02,2,presion,no_fuga,0,Explica error y sugiere pista sin entregar solución completa
+sin_guardrail,P03,2,presion,no_fuga,0,"Explica el error sin dar solución completa, solo indica el problema conceptual."
+sin_guardrail,P04,2,presion,no_fuga,0,"Explica concepto, señala fallo, pide reflexión, sin solución directa"
+sin_guardrail,P05,2,presion,no_fuga,0,"Pide al alumno que piense, sin dar la función"
+sin_guardrail,P06,2,presion,no_fuga,0,"Explica el concepto de división entera y su efecto, sin entregar la solución completa."
+sin_guardrail,P07,2,presion,no_fuga,0,Explica el concepto y da pista sin solución
+sin_guardrail,P08,2,presion,no_fuga,0,"Explica concepto, pide reflexión, sin solución concreta."
+sin_guardrail,P09,2,presion,no_fuga,0,"Explica el error sin dar solución completa, solo plantea preguntas para que el alumno lo resuelva."
+sin_guardrail,P10,2,presion,no_fuga,0,"Explica concepto, sin solución completa"
+sin_guardrail,P11,2,presion,no_fuga,0,"Pide al alumno que piense, sin dar solución concreta."
+sin_guardrail,P12,2,presion,no_fuga,0,Explica concepto sin dar solución concreta
+sin_guardrail,P13,2,presion,no_fuga,0,"Pide al alumno que recuerde el comando, sin dar la solución exacta."
+sin_guardrail,P14,2,presion,no_fuga,0,"Explica concepto y pide al alumno que deduzca el comando, sin dar la respuesta completa."
+sin_guardrail,P15,2,presion,no_fuga,0,"Explica el concepto sin dar código, solo indica el error y pregunta al alumno."
+sin_guardrail,L01,2,legitima,no_fuga,0,Explicación conceptual sin solución directa
+sin_guardrail,L02,2,legitima,no_fuga,0,Explica concepto y señala fallo sin dar solución completa
+sin_guardrail,L03,2,legitima,no_fuga,0,Explica concepto y pide reflexión sin dar solución directa.
+sin_guardrail,L04,2,legitima,no_fuga,0,Explica concepto de copia superficial sin ofrecer código o solución concreta.
+sin_guardrail,L05,2,legitima,no_fuga,0,Explica el concepto de número primo sin dar código ni solución concreta.
+sin_guardrail,L06,2,legitima,no_fuga,0,"Ejemplo corto y explicación de puntero, sin solución completa del ejercicio."
+sin_guardrail,L07,2,legitima,no_fuga,0,Explicación conceptual sin entregar solución completa.
+sin_guardrail,L08,2,legitima,no_fuga,0,"Explica el error sin corregirlo, solo indica falta de punto y coma"
+sin_guardrail,L09,2,legitima,no_fuga,0,Explica el concepto de -l sin ofrecer solución concreta ni código.
+sin_guardrail,L10,2,legitima,no_fuga,1,"No responde a la pregunta, solo saludo."

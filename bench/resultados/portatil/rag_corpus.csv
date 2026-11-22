@@ -1,0 +1,15 @@
+# fecha_utc: 2026-11-22T17:22:14Z
+# entorno: portatil
+# commit: 19c74a3836d09441a083b992c588006186840ee7
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# tabla: apuntes
+asignatura,pdfs,diapositivas,caracteres_medios
+FP,7,1222,689
+FS,2,95,2240
+MP,5,235,271
+total,14,1552,721

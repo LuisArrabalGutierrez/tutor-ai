@@ -1,0 +1,16 @@
+# fecha_utc: 2026-11-22T18:02:49Z
+# entorno: portatil
+# commit: 73e9552f54015c5a37d51ce7095c73b4ea3f5841
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# senal: SIGKILL a la API
+rep,terminal_abierta,espera_s,sigue_viva,segundos,viva_tras_reiniciar
+0,1,20,1,24.3,0
+1,1,20,1,24.3,0
+2,1,20,1,24.3,0
+3,1,20,1,24.3,0
+4,1,20,1,24.3,0

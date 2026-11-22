@@ -54,3 +54,27 @@ def test_un_contenedor_caido_se_detecta_y_se_recrea():
             assert out == "true"
         assert victima in obtenidos
     _run(_con_pool(prueba))
+
+
+def test_disk_opts_monta_la_raiz_de_solo_lectura_y_limita_tmp(monkeypatch):
+    from services.warm_pool import disk_opts
+    monkeypatch.setenv("SANDBOX_TMP_SIZE", "32m")
+    opts = disk_opts()
+    assert "--read-only" in opts
+    tmpfs = opts[opts.index("--tmpfs") + 1]
+    assert tmpfs.startswith("/tmp:") and "size=32m" in tmpfs
+    assert "exec" in tmpfs.split(",") and "nosuid" in tmpfs  # sin exec no arranca programa.out
+    assert opts[opts.index("--shm-size") + 1] == "8m"
+
+
+def test_el_contenedor_del_pool_no_deja_escribir_fuera_de_tmp_ni_pasar_del_limite():
+    async def prueba(pool):
+        name = await pool.get_container()
+        code, out = await _docker(
+            "exec", name, "bash", "-c",
+            "touch /home/alumno/x 2>&1; dd if=/dev/zero of=/tmp/relleno bs=1M count=200 2>&1",
+        )
+        assert "Read-only file system" in out
+        assert "No space left on device" in out
+        pool.release(name)
+    _run(_con_pool(prueba, size=1))

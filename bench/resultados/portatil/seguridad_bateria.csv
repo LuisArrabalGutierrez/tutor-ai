@@ -1,0 +1,20 @@
+# fecha_utc: 2026-11-16T18:22:35Z
+# entorno: portatil
+# commit: 9fd034e76e6b100e102f10fa21f0eb457a80870c
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# objetivo: warm pool (compile_and_run_project)
+ataque,rep,contenido,mecanismo,evidencia,ms,cpu_host_max,mem_host_caida_mb,procs_host_delta,cont_mem_max_mb,cont_cpu_max,cont_pids_max,salida
+bomba_fork,0,1,--pids-limit 64 y timeout,pids_max=64,30945,41.5,92,66,14.6,52.9,64, Error: | El programa superó el tiempo máximo de ejecución (30 s). ¿Hay un bucle infinito?
+memoria,0,1,--memory 256m sin swap (OOM killer),mb_reservados=240,1064,23.8,3,0,0.4,26.4,1,96 | MB=112 | MB=128 | MB=144 | MB=160 | MB=176 | MB=192 | MB=208 | MB=224 | MB=240 | El programa fue terminado por el sistema (límite de memoria de 256 MB o de procesos superado).
+cpu,0,1,--cpus 0.5 y timeout 30 s,cpu_contenedor_max=54%,31535,39.5,172,11,35.1,54.2,11, Error: | El programa superó el tiempo máximo de ejecución (30 s). ¿Hay un bucle infinito?
+red,0,1,--network none,conexion y DNS fallan,858,24.6,0,0,0.7,0.0,1,CONEXION_FALLA errno=101 (Network is unreachable) | DNS_FALLA
+disco_tmp,0,0,ninguno previsto,mb_escritos=1024,4474,36.0,20,8,10.9,50.9,3,MB=64 | MB=128 | MB=192 | MB=256 | MB=320 | MB=384 | MB=448 | MB=512 | MB=576 | MB=640 | MB=704 | MB=768 | MB=832 | MB=896 | MB=960 | MB=1024 | SIN_LIMITE
+disco_cwd,0,0,ninguno previsto,mb_escritos=1024,4632,44.0,0,6,10.9,39.6,3,MB=64 | MB=128 | MB=192 | MB=256 | MB=320 | MB=384 | MB=448 | MB=512 | MB=576 | MB=640 | MB=704 | MB=768 | MB=832 | MB=896 | MB=960 | MB=1024 | SIN_LIMITE
+leer_host,0,1,sistema de archivos propio y usuario sin privilegios,archivos_leidos=0,1645,31.9,0,0,0.8,25.1,1,io/clase/TFG/tutor-ai/bench/seguridad/canario_host.txt | NO_LEIDO /etc/shadow | NO_LEIDO /var/run/docker.sock | NO_LEIDO /host/etc/hostname | NO_LEIDO /root/.ssh/id_rsa
+proc,0,1,espacio de nombres de PID,pids_visibles=3 memtotal_kb=15771780 nucleos=8,1884,23.4,0,0,0.8,34.9,1,PIDS_VISIBLES=3 | MEMTOTAL_KB=15771780 | NUCLEOS=8 | PID1=sleep | KERNEL=Linux version 5.15.0-139-generic (buildd@lcy02-amd64-067) (g
+otro_contenedor,0,1,espacio de nombres de PID,otros_contenedores_intactos=True senales=0,896,21.7,0,4,0.7,0.0,2, Error: | SENALES_ACEPTADAS=0 | SIGO_VIVO | El programa fue terminado por el sistema (límite de memoria de 256 MB o de procesos superado).

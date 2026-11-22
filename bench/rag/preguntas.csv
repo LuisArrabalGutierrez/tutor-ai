@@ -1,0 +1,97 @@
+id,asignatura,tipo,tema,diapositiva,pregunta
+FP01,FP,teoria,4.0.Recursividad.pdf,11,¿Qué es una función recursiva y cómo se escribe en un lenguaje de programación?
+FP02,FP,codigo,4.0.Recursividad.pdf,16,Tengo int sumatoria(int n){ if (n==1) return 1; else return n + sumatoria(n-1); } ¿cuál es el caso base y cuál el caso general?
+FP03,FP,teoria,4.0.Recursividad.pdf,37,¿Por qué quicksort es tan eficiente y qué importancia tiene elegir bien el pivote?
+FP04,FP,teoria,FP_tema1.pdf,17,¿Qué es un lenguaje de alto nivel y para qué sirve el compilador?
+FP05,FP,erratas,FP_tema1.pdf,28,q es un eror logico? mi programa compila y ejecuta pero no ace lo q espero
+FP06,FP,teoria,FP_tema1.pdf,32,¿Qué va en la cabecera de un programa en C++ y para qué sirven los include?
+FP07,FP,ambigua,FP_tema1.pdf,36,¿da igual cómo coloque las llaves y los espacios en mi código?
+FP08,FP,codigo,FP_tema1.pdf,40,Si declaro int var; y luego hago var = 34.5; ¿por qué está mal?
+FP09,FP,teoria,FP_tema2.pdf,25,¿Cómo es el flujo de ejecución de un if con else? Por ejemplo para saber si un número es par o impar
+FP10,FP,codigo,FP_tema2.pdf,33,"Tengo un menú con char option y quiero hacer una cosa si es 'S' y otra si es 'O', ¿cómo encadeno varios if else?"
+FP11,FP,teoria,FP_tema2.pdf,61,¿Cómo leo números por teclado hasta que metan uno negativo y voy sumando? ¿Con do while?
+FP12,FP,erratas,FP_tema2.pdf,77,cual es la estrutura del bucle for? q va en cada parte del parentesis
+FP13,FP,teoria,FP_tema3.pdf,8,¿Cómo accedo a los campos de un registro y puedo asignar un registro a otro?
+FP14,FP,ambigua,FP_tema3.pdf,13,quiero pedir tres notas y que estén entre 0 y 10 y luego ver cuántas superan la media
+FP15,FP,teoria,FP_tema3.pdf,31,¿Puedo usar cada componente de un vector como si fuera una variable normal?
+FP16,FP,codigo,FP_tema3.pdf,35,¿Puedo hacer notas[pos] = notas[pos]+0.5; con pos una variable? ¿Y recorrer así todo el vector con un bucle?
+FP17,FP,teoria,FP_tema3.pdf,44,"¿Cómo declaro un vector de registros, por ejemplo una lista de empleados, y cómo accedo al salario de cada uno?"
+FP18,FP,erratas,FP_tema3.pdf,56,como se declara una matris en c++? el formato de filas y colunas
+FP19,FP,ambigua,FP_tema3.pdf,63,"En una imagen guardada en una matriz tengo valores negativos incorrectos, ¿cómo los cambio por la media de los vecinos?"
+FP20,FP,teoria,FP_tema4.pdf,5,¿Por qué conviene usar funciones en vez de repetir el mismo cálculo de la hipotenusa varias veces en el main?
+FP21,FP,teoria,FP_tema4.pdf,9,¿Qué diferencia hay entre parámetros formales y parámetros actuales?
+FP22,FP,codigo,FP_tema5.pdf,51,En el main hago contenido = una_recta.Contiene(un_punto); ¿cómo uso ese resultado para decir si la recta contiene al punto?
+FP23,FP,teoria,FP_Apuntes_JC_Cubero_2425.pdf,219,¿Por qué debo usar constantes en vez de literales para los límites de las subidas salariales?
+FP24,FP,teoria,FP_Apuntes_JC_Cubero_2425.pdf,261,¿Cómo planteo la condición de un bucle cuando es una condición compuesta? Por ejemplo para el máximo común divisor
+FP25,FP,ambigua,FP_Apuntes_JC_Cubero_2425.pdf,326,"mi bucle no termina nunca, ¿qué tengo que garantizar?"
+FP26,FP,teoria,FP_Apuntes_JC_Cubero_2425.pdf,361,¿Qué casos de prueba debería comprobar en un algoritmo de búsqueda en un vector?
+FP27,FP,erratas,FP_Apuntes_JC_Cubero_2425.pdf,370,q es la ordenasion de un vector y para q se usa
+FP28,FP,codigo,FP_Apuntes_JC_Cubero_2425.pdf,411,En double Cuadrado(double entrada){ return entrada * entrada; } y resultado = Cuadrado(dato); ¿cuál es el parámetro formal y cuál el actual?
+FP29,FP,codigo,FP_Apuntes_JC_Cubero_2425.pdf,509,"class SegmentoDirigido{ public: double x_1, y_1, x_2, y_2; }; ¿cómo creo un objeto y le doy valores a sus datos?"
+FP30,FP,teoria,FP_Apuntes_JC_Cubero_2425.pdf,703,¿Cómo gestiona C++ el copiado entre objetos y qué implica para diseñar clases que colaboran?
+FP31,FP,teoria,FP_Apuntes_JC_Cubero_2425.pdf,709,¿Para qué sirve el constructor de copia? Por ejemplo con una secuencia de caracteres
+FP32,FP,ambigua,FP_Apuntes_JC_Cubero_2425.pdf,844,¿cómo busco de forma recursiva la primera ocurrencia de un valor entre dos posiciones de un vector?
+MP01,MP,teoria,Tema 01 - Punteros y Memoria Dinamica.pdf,4,¿Qué es un puntero y qué contiene?
+MP02,MP,teoria,Tema 01 - Punteros y Memoria Dinamica.pdf,10,¿Qué hacen los operadores & y * con los punteros?
+MP03,MP,ambigua,Tema 01 - Punteros y Memoria Dinamica.pdf,12,¿qué pasa si uso un puntero sin inicializar?
+MP04,MP,teoria,Tema 01 - Punteros y Memoria Dinamica.pdf,17,¿Qué ventajas tiene usar punteros?
+MP05,MP,teoria,Tema 01 - Punteros y Memoria Dinamica.pdf,20,¿Qué es la memoria virtual de un programa y en qué segmentos se divide?
+MP06,MP,ambigua,Tema 01 - Punteros y Memoria Dinamica.pdf,31,¿por qué usamos C++ en la asignatura y no otro lenguaje? ¿es más eficiente?
+MP07,MP,codigo,Tema 01 - Punteros y Memoria Dinamica.pdf,40,"Si tengo int *ptr y hago ptr+1, ¿la dirección sube en 1? ¿Y qué obtengo si resto dos punteros?"
+MP08,MP,erratas,Tema 01 - Punteros y Memoria Dinamica.pdf,41,se pueden conparar dos punteros con < y > ?
+MP09,MP,teoria,Tema 01 - Punteros y Memoria Dinamica.pdf,45,¿Cómo creo y guardo variables en el heap en lugar de en la pila?
+MP10,MP,codigo,Tema 01 - Punteros y Memoria Dinamica.pdf,52,Reservé con int *v = new int[10]; y libero con delete v; ¿está bien?
+MP11,MP,teoria,Tema 01 - Punteros y Memoria Dinamica.pdf,60,¿Puedo tener un vector dinámico dentro de una clase? ¿Dónde hago el new?
+MP12,MP,teoria,Tema 01 - Punteros y Memoria Dinamica.pdf,64,¿Qué diferencias hay entre una matriz estática y una dinámica?
+MP13,MP,codigo,Tema 01 - Punteros y Memoria Dinamica.pdf,68,¿Para reservar una matriz dinámica tengo que declarar int ** matriz; ?
+MP14,MP,teoria,Tema 02 - Funciones.pdf,11,¿Qué pasa si una función devuelve una referencia constante? ¿Puedo modificar el valor?
+MP15,MP,teoria,Tema 02 - Funciones.pdf,12,¿Qué restricciones tiene la función main? ¿Se puede sobrecargar?
+MP16,MP,erratas,Tema 02 - Funciones.pdf,17,como convierto un numero a string? y q hay en argv[0]
+MP17,MP,teoria,Tema 02 - Funciones.pdf,22,¿Qué son el puntero a frame y el puntero a stack de la pila?
+MP18,MP,teoria,Tema 03 - Clases.pdf,4,"¿Qué enfoques de programación hay? Estructurada, modular, procedural, orientada a objetos"
+MP19,MP,teoria,Tema 03 - Clases.pdf,7,¿Qué son los datos miembro de una clase y qué es el estado de un objeto?
+MP20,MP,erratas,Tema 03 - Clases.pdf,8,diferensia entre dato publico y privado en una clase
+MP21,MP,ambigua,Tema 03 - Clases.pdf,16,"copio un objeto que tiene un vector dentro y al cambiar uno cambia el otro, ¿por qué?"
+MP22,MP,teoria,Tema 03 - Clases.pdf,28,¿Qué es el puntero this y cuándo hace falta escribirlo?
+MP23,MP,teoria,Tema 03 - Clases.pdf,55,¿Qué operadores se pueden sobrecargar? ¿Hay algunos que ya vienen sobrecargados?
+MP24,MP,teoria,Tema 03 - Clases.pdf,59,¿Qué es una función friend y para qué se usa?
+MP25,MP,codigo,Tema 03 - Clases.pdf,69,"Quiero poder escribir v3 = v1 + v2 con mi clase vector, ¿cuántos parámetros lleva el operator+ si es función miembro?"
+MP26,MP,teoria,Tema 03 - Clases.pdf,73,¿Por qué el operador de asignación por defecto da problemas con clases que tienen vectores?
+MP27,MP,teoria,Tema 04 - Gestion de ES.pdf,15,¿Qué pasos sigo para leer un fichero con fstream?
+MP28,MP,teoria,Tema 05 - Cadenas en C++.pdf,4,¿Qué es un c-string y cómo se cuenta su tamaño?
+MP29,MP,erratas,Tema 05 - Cadenas en C++.pdf,5,q pasa con lo q hay despues del \0 en un cstring? me da violasion de segmento
+MP30,MP,teoria,Tema 05 - Cadenas en C++.pdf,17,"¿Qué métodos tiene la clase string para consultar sus datos sin modificarlos? size, length, c_str"
+MP31,MP,codigo,Tema 05 - Cadenas en C++.pdf,21,"¿Qué hace cadena.erase(3, 5) en un string? ¿Qué significa cada parámetro?"
+MP32,MP,ambigua,Tema 05 - Cadenas en C++.pdf,23,¿puedo llamar a varios métodos de un string seguidos en la misma línea?
+FS01,FS,teoria,ModuloI.pdf,6,¿De qué trata la práctica 0 de introducción al entorno gráfico de UNIX y cuáles son sus objetivos?
+FS02,FS,ambigua,ModuloI.pdf,9,¿qué parámetros pongo al crear la máquina virtual de Ubuntu en VirtualBox?
+FS03,FS,teoria,ModuloI.pdf,15,"¿Para qué sirven las carpetas opt, proc y mnt en Linux?"
+FS04,FS,teoria,ModuloI.pdf,16,"¿En qué tres apartados se dividen los permisos de un fichero? Propietario, grupo y otros"
+FS05,FS,teoria,ModuloI.pdf,18,¿Para qué sirve la orden man y cómo busca en las secciones del manual?
+FS06,FS,erratas,ModuloI.pdf,19,q ordenes hay para copiar y renonbrar archibos en linux
+FS07,FS,teoria,ModuloI.pdf,21,"¿Qué significan los permisos r, w y x en archivos y en directorios?"
+FS08,FS,codigo,ModuloI.pdf,28,¿Qué diferencia hay entre cat archivo y cat < archivo? ¿Y entre > y >> al redirigir la salida?
+FS09,FS,ambigua,ModuloI.pdf,30,quiero ver solo los últimos 6 archivos de /etc en formato largo sin usar cd
+FS10,FS,teoria,ModuloI.pdf,31,"¿Para qué sirven los paréntesis al combinar órdenes, por ejemplo con date y pwd?"
+FS11,FS,codigo,ModuloI.pdf,32,"¿Qué hace ls notas && wc notas || echo ""no existe el archivo notas""?"
+FS12,FS,codigo,ModuloI.pdf,35,"Hago declare -i IVA=hola y luego declare -p IVA me da 0, ¿por qué? ¿Qué otros atributos hay como -r o -a?"
+FS13,FS,teoria,ModuloI.pdf,36,¿Qué diferencia hay entre comillas dobles y comillas simples en bash?
+FS14,FS,codigo,ModuloI.pdf,42,¿Qué hace cut -c1-3 personas.txt?
+FS15,FS,teoria,ModuloI.pdf,54,"¿Cómo combino varias expresiones de la orden test con not, and y or?"
+FS16,FS,teoria,ModuloI.pdf,56,¿Cómo comparo valores aritméticos en bash?
+FS17,FS,codigo,ModuloI.pdf,57,"if [ $valor==""adios"" ]; then echo sí; else echo no; fi me dice sí aunque valor es hola, ¿qué pasa?"
+FS18,FS,teoria,ModuloI.pdf,59,¿Qué es una expresión regular y para qué se usa?
+FS19,FS,codigo,ModuloI.pdf,61,¿Cómo busco con find y -regex en /usr/bin los archivos cuyo nombre contenga cd o zip?
+FS20,FS,ambigua,ModuloI.pdf,63,¿qué se aprende en la práctica de programación del shell y control de trabajos?
+FS21,FS,teoria,ModuloI.pdf,64,¿Cómo leo del teclado dentro de un guion? ¿Cuál es la sintaxis de read?
+FS22,FS,erratas,ModuloI.pdf,68,como funsiona la orden until y en q se diferensia de while
+FS23,FS,teoria,ModuloI.pdf,69,¿Cómo defino una función en bash y por qué es más rápida que llamar a un guion?
+FS24,FS,teoria,ModuloI.pdf,74,¿Qué hace la orden % con los trabajos y para qué sirve wait?
+FS25,FS,teoria,ModuloI.pdf,75,¿Para qué sirve la orden kill y qué señal manda por defecto?
+FS26,FS,erratas,ModuloI.pdf,76,opsiones mas comunes de la orden ps para ver los prosesos
+FS27,FS,teoria,ModuloII.pdf,9,"¿Cómo es la estructura de un archivo makefile? Objetivo, dependencias y órdenes"
+FS28,FS,ambigua,ModuloII.pdf,11,mi makefile no detecta los cambios en un .h que está en otro directorio
+FS29,FS,ambigua,ModuloII.pdf,12,¿cómo sería un makefile más complejo con varios fuentes y una biblioteca?
+FS30,FS,codigo,ModuloII.pdf,13,"En un makefile, ¿para qué sirven las variables CC=g++ e INCLUDE_DIR= ./includes?"
+FS31,FS,codigo,ModuloII.pdf,14,¿Qué significan $@ y $< en una regla de makefile?
+FS32,FS,teoria,ModuloII.pdf,15,¿Qué muestra make con la opción -p y cómo sustituyo cadenas en una variable del makefile?

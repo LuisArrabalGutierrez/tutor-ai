@@ -1,0 +1,101 @@
+# fecha_utc: 2026-11-19T18:13:07Z
+# entorno: vm
+# commit: 6914f9bfc47bcee245f9904ea61d22f678133a06
+# cpu: AMD EPYC 7B12
+# vcpu: 2
+# ram_gib: 3.8
+# kernel: 6.8.0-1070-gcp
+# docker: 29.1.3
+# python: 3.10.12
+# n: 30
+id,caso,ms
+FP01,sin_cache,831.34
+FP01,cache_resultado,0.0056
+FP01,cache_embedding,215.88
+FP03,sin_cache,434.52
+FP03,cache_resultado,0.0047
+FP03,cache_embedding,84.91
+FP04,sin_cache,328.86
+FP04,cache_resultado,0.0044
+FP04,cache_embedding,174.47
+FP06,sin_cache,329.71
+FP06,cache_resultado,0.0052
+FP06,cache_embedding,88.49
+FP09,sin_cache,316.56
+FP09,cache_resultado,0.0045
+FP09,cache_embedding,73.96
+FP11,sin_cache,353.0
+FP11,cache_resultado,0.0051
+FP11,cache_embedding,69.91
+FP13,sin_cache,347.76
+FP13,cache_resultado,0.0046
+FP13,cache_embedding,81.45
+FP15,sin_cache,430.34
+FP15,cache_resultado,0.0058
+FP15,cache_embedding,76.98
+FP17,sin_cache,315.59
+FP17,cache_resultado,0.0055
+FP17,cache_embedding,93.77
+FP20,sin_cache,335.13
+FP20,cache_resultado,0.006
+FP20,cache_embedding,98.06
+FP21,sin_cache,348.86
+FP21,cache_resultado,0.0051
+FP21,cache_embedding,70.87
+FP23,sin_cache,342.52
+FP23,cache_resultado,0.007
+FP23,cache_embedding,73.52
+FP24,sin_cache,333.26
+FP24,cache_resultado,0.0057
+FP24,cache_embedding,184.08
+FP26,sin_cache,311.13
+FP26,cache_resultado,0.0046
+FP26,cache_embedding,75.6
+FP30,sin_cache,307.05
+FP30,cache_resultado,0.0055
+FP30,cache_embedding,69.67
+FP31,sin_cache,329.49
+FP31,cache_resultado,0.005
+FP31,cache_embedding,81.44
+MP01,sin_cache,317.19
+MP01,cache_resultado,0.004
+MP01,cache_embedding,73.81
+MP02,sin_cache,336.72
+MP02,cache_resultado,0.005
+MP02,cache_embedding,74.58
+MP04,sin_cache,341.39
+MP04,cache_resultado,0.0068
+MP04,cache_embedding,74.13
+MP05,sin_cache,332.51
+MP05,cache_resultado,0.0055
+MP05,cache_embedding,74.23
+MP09,sin_cache,336.54
+MP09,cache_resultado,0.0055
+MP09,cache_embedding,78.02
+MP11,sin_cache,329.85
+MP11,cache_resultado,0.006
+MP11,cache_embedding,78.12
+MP12,sin_cache,316.38
+MP12,cache_resultado,0.0053
+MP12,cache_embedding,69.13
+MP14,sin_cache,329.0
+MP14,cache_resultado,0.0048
+MP14,cache_embedding,68.95
+MP15,sin_cache,330.59
+MP15,cache_resultado,0.0073
+MP15,cache_embedding,79.19
+MP17,sin_cache,315.18
+MP17,cache_resultado,0.005
+MP17,cache_embedding,128.99
+MP18,sin_cache,347.29
+MP18,cache_resultado,0.0074
+MP18,cache_embedding,70.29
+MP19,sin_cache,341.16
+MP19,cache_resultado,0.0053
+MP19,cache_embedding,78.15
+MP22,sin_cache,410.94
+MP22,cache_resultado,0.0055
+MP22,cache_embedding,95.87
+MP23,sin_cache,316.1
+MP23,cache_resultado,0.0051
+MP23,cache_embedding,76.54

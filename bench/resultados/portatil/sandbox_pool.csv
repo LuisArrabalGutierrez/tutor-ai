@@ -1,0 +1,20 @@
+# fecha_utc: 2026-11-16T18:05:37Z
+# entorno: portatil
+# commit: 9fd034e76e6b100e102f10fa21f0eb457a80870c
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# descartadas_calentamiento: 3
+# pool_size: 3
+rep,calentamiento,get_ms,exec_ms,total_ms,reciclado_ms
+0,1,162.92,199.37,362.28,518.09
+1,1,148.43,199.98,348.42,519.37
+2,1,153.12,205.59,358.72,519.52
+3,0,187.54,190.65,378.19,521.52
+4,0,150.65,199.58,350.22,524.06
+5,0,151.12,203.5,354.62,520.49
+6,0,153.43,197.06,350.49,509.43
+7,0,152.84,196.12,348.96,520.4

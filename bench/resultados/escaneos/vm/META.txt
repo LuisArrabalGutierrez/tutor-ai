@@ -1,0 +1,5 @@
+fecha_utc: 2026-11-19T18:14:42Z
+entorno: vm
+commit: 6914f9bfc47bcee245f9904ea61d22f678133a06
+imagen_sandbox: sha256:346e5221c10d93ce93a8ebcd14ffe54b12cf0fc512e8242ec8b0ee21e8aab6f6 creada 2026-11-02T20:56:41.865084118Z
+docker_bench: v1.6.1 ba0b402ea56aafbb9a56f09cc13ee629160c58b6

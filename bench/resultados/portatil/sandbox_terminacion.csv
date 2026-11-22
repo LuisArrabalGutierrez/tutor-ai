@@ -1,0 +1,22 @@
+# fecha_utc: 2026-11-16T18:07:31Z
+# entorno: portatil
+# commit: 9fd034e76e6b100e102f10fa21f0eb457a80870c
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# timeout_interno_s: 30
+caso,rep,total_ms,salida_ok,contenedor_recreado,procesos_restantes
+referencia,0,800.16,1,,
+referencia,1,864.69,1,,
+referencia,2,814.23,1,,
+referencia,3,853.3,1,,
+referencia,4,787.18,1,,
+referencia,5,824.33,1,,
+referencia,6,828.8,1,,
+referencia,7,813.67,1,,
+referencia,8,786.12,1,,
+referencia,9,792.83,1,,
+bucle,0,30825.5,1,1,0
