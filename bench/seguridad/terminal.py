@@ -27,7 +27,7 @@ ATAQUES = [
 
 
 def contenedor_terminal() -> str:
-    r = subprocess.run(["docker", "ps", "--filter", "name=tutor_term_", "--format", "{{.Names}}"], capture_output=True, text=True)
+    r = subprocess.run(["docker", "ps", "--filter", "name=" + os.environ.get("TERMINAL_PREFIX", "bench_term_"), "--format", "{{.Names}}"], capture_output=True, text=True)
     return (r.stdout.split() or [""])[0]
 
 

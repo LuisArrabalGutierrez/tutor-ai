@@ -101,3 +101,47 @@ def test_los_archivos_copiados_son_del_usuario_del_contenedor():
         "dir/a.txt": "x",
     }).json()
     assert "MISMO_USUARIO" in data["output"], data["output"]
+
+
+ESCRIBE_1GIB = """#include <cstdio>
+#include <cstring>
+#include <fcntl.h>
+#include <unistd.h>
+int main() {
+    static char b[1 << 20]; memset(b, 7, sizeof b);
+    int fd = open("RUTA", O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0) { printf("OPEN_FALLA\\n"); return 0; }
+    for (int mb = 1; mb <= 1024; ++mb)
+        if (write(fd, b, sizeof b) != (ssize_t)sizeof b) { printf("WRITE_FALLA_EN_MB=%d\\n", mb); return 0; }
+    printf("SIN_LIMITE\\n");
+}
+"""
+
+
+@pytest.mark.parametrize("ruta", ["/tmp/relleno.bin", "relleno.bin"])
+def test_el_programa_no_puede_llenar_el_disco(ruta):
+    """F-3: sin --read-only y tmpfs el alumno escribía 1 GiB en la capa del contenedor (disco del host)."""
+    data = _ejecutar({"main.cpp": ESCRIBE_1GIB.replace("RUTA", ruta)}).json()
+    assert "SIN_LIMITE" not in data["output"], data["output"]
+    assert "WRITE_FALLA_EN_MB=" in data["output"], data["output"]
+    mb = int(data["output"].split("WRITE_FALLA_EN_MB=")[1].split()[0])
+    assert mb <= 64
+
+
+def test_el_programa_no_puede_escribir_en_su_home():
+    data = _ejecutar({"main.cpp": ESCRIBE_1GIB.replace("RUTA", "/home/alumno/x.bin")}).json()
+    assert "OPEN_FALLA" in data["output"], data["output"]
+
+
+def test_makefile_con_varios_objetos_en_subcarpetas_compila_en_el_tmpfs():
+    data = _ejecutar({
+        "Makefile": (
+            "main: obj/a.o obj/b.o obj/main.o\n\tg++ -o main obj/a.o obj/b.o obj/main.o\n"
+            "obj/%.o: src/%.cpp\n\tmkdir -p obj && g++ -O2 -c $< -o $@\n"
+        ),
+        "src/a.cpp": "int a(){ return 1; }",
+        "src/b.cpp": "int b(){ return 2; }",
+        "src/main.cpp": '#include <iostream>\nint a(); int b();\nint main(){ std::cout << "suma=" << a() + b(); }',
+    }).json()
+    assert data["isError"] is False, data["output"]
+    assert "suma=3" in data["output"]

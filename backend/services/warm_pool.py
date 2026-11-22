@@ -24,6 +24,19 @@ def security_opts() -> list[str]:
     return ["--security-opt", "no-new-privileges"]
 
 
+def disk_opts() -> list[str]:
+    """Raíz de solo lectura: el alumno solo escribe en /tmp, un tmpfs de tamaño fijo (SANDBOX_TMP_SIZE).
+
+    El tmpfs cuenta contra los 256 MB de memoria del contenedor. `exec` hace falta para lanzar programa.out.
+    """
+    tam = os.getenv("SANDBOX_TMP_SIZE", "64m")
+    return [
+        "--read-only",
+        "--tmpfs", f"/tmp:rw,exec,nosuid,nodev,size={tam},mode=1777",
+        "--shm-size", "8m",
+    ]
+
+
 def _log(msg: str) -> None:
     # stderr: el servidor MCP usa stdout para el protocolo, no se puede imprimir ahí
     print(msg, file=sys.stderr, flush=True)
@@ -69,6 +82,7 @@ class WarmPoolManager:
             "--pids-limit", "64",
             "--cap-drop", "ALL",
             *security_opts(),
+            *disk_opts(),
             IMAGE,
             "sleep", "infinity",
         )
