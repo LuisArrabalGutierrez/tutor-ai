@@ -1,0 +1,24 @@
+# fecha_utc: 2026-11-22T16:43:11Z
+# entorno: portatil
+# commit: 19c74a3836d09441a083b992c588006186840ee7
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# limite: 30/minute
+# endpoint: /api/execute
+estrategia,rep,enviadas,aceptadas,rechazadas_429,otras,esperadas
+misma_ip,0,60,30,30,0,30
+sin_cabeceras,0,60,30,30,0,30
+xff_rotada,0,60,60,0,0,30
+bearer_falso,0,60,60,0,0,30
+misma_ip,1,60,30,30,0,30
+sin_cabeceras,1,60,30,30,0,30
+xff_rotada,1,60,60,0,0,30
+bearer_falso,1,60,60,0,0,30
+misma_ip,2,60,30,30,0,30
+sin_cabeceras,2,60,30,30,0,30
+xff_rotada,2,60,60,0,0,30
+bearer_falso,2,60,60,0,0,30

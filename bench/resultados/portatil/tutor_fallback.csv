@@ -1,0 +1,33 @@
+# fecha_utc: 2026-11-19T18:13:38Z
+# entorno: portatil
+# commit: 19c74a3836d09441a083b992c588006186840ee7
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# gemini: gemini-flash-lite-latest
+# groq: openai/gpt-oss-20b
+# modo: grafo
+caso,rep,ms,respondio,paso_a_groq,caracteres
+normal,0,4285,1,0,387
+normal,1,1481,1,0,360
+normal,2,4176,1,0,573
+normal,3,1307,1,0,599
+normal,4,1650,1,0,373
+normal,5,1547,1,0,515
+normal,6,4119,1,0,406
+normal,7,1179,1,0,402
+normal,8,1398,1,0,652
+normal,9,1703,1,0,680
+gemini_caida,0,5934,0,1,0
+gemini_caida,1,2053,1,1,600
+gemini_caida,2,2173,1,1,561
+gemini_caida,3,1307,1,1,714
+gemini_caida,4,1657,1,1,592
+gemini_caida,5,1704,1,1,819
+gemini_caida,6,1463,1,1,1013
+gemini_caida,7,982,1,1,656
+gemini_caida,8,1735,1,1,827
+gemini_caida,9,2335,1,1,1099

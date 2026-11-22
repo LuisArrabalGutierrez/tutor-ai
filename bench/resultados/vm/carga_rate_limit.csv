@@ -1,0 +1,23 @@
+# fecha_utc: 2026-11-22T16:42:38Z
+# entorno: vm
+# commit: 6914f9bfc47bcee245f9904ea61d22f678133a06
+# cpu: AMD Ryzen 7 4700U with Radeon Graphics
+# vcpu: 8
+# ram_gib: 15.0
+# kernel: 5.15.0-139-generic
+# docker: 29.8.0
+# python: 3.11.8
+# peticiones_por_prueba: 60
+endpoint,patron,rep,enviadas,aceptadas,rechazadas_429,otras,esperadas,duracion_s
+chat,uniforme,0,60,15,45,0,15,60.0
+chat,uniforme,1,60,15,45,0,15,60.0
+chat,uniforme,2,60,15,45,0,15,60.0
+chat,rafaga,0,60,15,45,0,15,0.6
+chat,rafaga,1,60,15,45,0,15,0.8
+chat,rafaga,2,60,15,45,0,15,0.6
+execute,uniforme,0,60,30,30,0,30,60.0
+execute,uniforme,1,60,30,30,0,30,60.0
+execute,uniforme,2,60,30,30,0,30,60.0
+execute,rafaga,0,60,30,30,0,30,13.0
+execute,rafaga,1,60,30,30,0,30,13.0
+execute,rafaga,2,60,30,30,0,30,13.1

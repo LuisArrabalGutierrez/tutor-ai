@@ -34,9 +34,11 @@ for fase in $FASES; do case $fase in
     docker run --rm --network host -v "$OUT:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
       -t http://127.0.0.1:8100/openapi.json -f openapi -J zap_api.json -I > "$OUT/zap_api.log" 2>&1 ;;
   dockerbench)
-    # CIS Docker Benchmark. Necesita acceso de lectura a la configuración del demonio.
-    docker run --rm --net host --pid host --userns host --cap-add audit_control \
-      -v /etc:/etc:ro -v /usr/lib/systemd:/usr/lib/systemd:ro -v /var/lib:/var/lib:ro \
-      -v /var/run/docker.sock:/var/run/docker.sock:ro --label docker_bench_security \
-      docker/docker-bench-security > "$OUT/docker_bench.log" 2>&1 ;;
+    # CIS Docker Benchmark. La imagen docker/docker-bench-security trae un cliente Docker 18.06 (API 1.38) que
+    # Docker 29 rechaza, así que se ejecuta el script del proyecto en el host, fijado a v1.6.1, con sudo.
+    DB="${BENCH_DOCKERBENCH_DIR:-$HOME/docker-bench-security}"
+    [ -d "$DB" ] || git clone -q --branch v1.6.1 https://github.com/docker/docker-bench-security "$DB"
+    echo "docker_bench: $(git -C "$DB" describe --tags) $(git -C "$DB" rev-parse HEAD)" >> "$OUT/META.txt"
+    (cd "$DB" && sudo -n sh docker-bench-security.sh -l "$OUT/docker_bench_salida.log") > "$OUT/docker_bench.log" 2>&1
+    sudo -n chown -R "$(id -u):$(id -g)" "$OUT" ;;
 esac; echo "$fase hecho"; done

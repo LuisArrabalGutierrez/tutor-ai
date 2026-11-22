@@ -31,7 +31,8 @@ k6_a_csv() {  # modo vus rep [duracion]
       echo "# cliente: k6 $(k6 version | cut -d' ' -f2) en el portatil, por tunel SSH"
       echo "# pausa_entre_peticiones_s: 2.5"; echo "modo,vus,rep,metrica,epoch_s,ms,resultado"; } > "$destino"
   fi
-  awk -F, -v m="$1" -v v="$2" -v r="$3" '$1=="exec_ms"||$1=="docs_ms"{sub("resultado=","",$18); printf "%s,%s,%s,%s,%s,%.2f,%s\n", m,v,r,$1,$2,$3,$18}' "$bruto" >> "$destino"
+  # LC_ALL=C: con un locale de coma decimal (es_ES) printf escribiría 15425,00 y rompería el CSV
+  LC_ALL=C awk -F, -v m="$1" -v v="$2" -v r="$3" '$1=="exec_ms"||$1=="docs_ms"{sub("resultado=","",$18); printf "%s,%s,%s,%s,%s,%.2f,%s\n", m,v,r,$1,$2,$3,$18}' "$bruto" >> "$destino"
   rm -f "$bruto"
 }
 

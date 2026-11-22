@@ -14,7 +14,9 @@ case "${1:-}" in
       -e "ssh -o BatchMode=yes -o User=${VM_USER:-luisarrabalgutierrez}" "$AQUI/" "tutoria-vm:tutor-ai-bench/" ;;
   lanzar)
     nombre="$2"; shift 2
-    "${SSH[@]}" "mkdir -p $DEST/logs && cd $DEST && BENCH_ENTORNO=vm BENCH_BACKEND=\$HOME/tutor-ai/backend PY=\$HOME/tutor-ai/backend/venv/bin/python nohup bash -c '$*' > logs/$nombre.log 2>&1 < /dev/null & echo lanzado" ;;
+    # Las llaves hacen que el & afecte solo a nohup; sin ellas la lista entera queda en segundo plano con la
+    # salida de ssh abierta y la orden no vuelve hasta que acaba el proceso remoto.
+    "${SSH[@]}" "mkdir -p $DEST/logs && cd $DEST && { BENCH_ENTORNO=vm BENCH_BACKEND=\$HOME/tutor-ai/backend PY=\$HOME/tutor-ai/backend/venv/bin/python nohup bash -c '$*' > logs/$nombre.log 2>&1 < /dev/null & } && echo lanzado" ;;
   estado)
     "${SSH[@]}" "tail -n ${3:-8} $DEST/logs/$2.log; pgrep -af 'tutor-ai-bench|bench/' | grep -v pgrep | cut -c1-120 || echo '(sin procesos del banco)'" ;;
   traer)
